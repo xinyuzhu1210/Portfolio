@@ -16,6 +16,8 @@ Featured songs:
   - Creepin’ by Metro Boomin, The Weeknd and 21 Savage
     
 
+Plot description: 
+
 To gain more insight into the Weeknd's music, I have first analyzed the underlying audio features of his songs alone. When looking at the Valence image, you can see that all of his albums has a quite low valence score (mostly below 0.5), which means that it is more likely to be associated with negative feelings. On the other hand, the Danceability score of his albums are more on the higher side (mostly above 0.5), which means that his songs are more danceable in general. That there was a difference in these feature scores was actually quite surprising, especially since one would expect a positive correlation between these features instead of a negative one, as can be seen in the scatterplot image. Not only that, but they both also positively correlate with the energy scores, which seems reasonable given their interplay with eachother. The interesting part would therefore be about the difference between the scatter plot correlations and the feature distributions. It would be fascinating to examine why the danceability scores were quite high, despite the low overall valence scores, and how it was affected by other audio features. 
 
 
