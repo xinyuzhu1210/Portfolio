@@ -7,13 +7,15 @@ output:
 
 ```{r setup, include=FALSE}
 library(flexdashboard)
+
+readRenviron(".Renviron")
 ```
 
 ## Column {data-width="650"}
 
 ### Chart A
 
-test
+test2
 
 ```{r}
 
