@@ -1,8 +1,28 @@
 ---
-title: "Untitled"
+title: "Portfolio for Computational Musicology: Analyzing The Weeknd"
+author: "Xinyu Zhu"
+date: "February 2024"
 output: 
   flexdashboard::flex_dashboard:
     storyboard: true
+    self_contained: false
+    theme:
+      heading_font:
+        google: 
+          family: Rajdhani
+          wght: 700
+      base_font:
+        google: Fira Sans
+      code_font:
+        google: Fira Mono
+      bg: "#FFFFFF"
+      fg: "#212529" 
+      primary: "#2f768d"
+      secondary: "#39d7b8"
+      success: "#39d7b8"
+      danger: "#fa5577"
+      warning: "#ffb14c"
+      info: "#0cc7f1"
 ---
 
 ```{r setup, include=FALSE}
@@ -11,26 +31,57 @@ library(flexdashboard)
 readRenviron(".Renviron")
 ```
 
-## Column {data-width="650"}
+### Corpus description
 
-### Chart A
+The portfolio focuses on a corpus that consists of songs made by The Weeknd as well as songs featured by The Weeknd. I decided to analyse this specific kind of corpus, because The Weeknd was the most listened artist from my sportify wrapped and I was interested in the factors that made me drawn to his music. To make the analyses more concrete, I decided to compare different points from the corpus, namely the songs from The Weeknd and the songs that he was featured in. Specifically, I will first examine the songs from The Weeknd to gain a greater insight from his music and then I will evaluate to what extend the music changes when he is featured in songs of other artists. This way I hope to discover what characteristics in his music make him distinctive as an artist, even in the featured songs. As a matter of fact, I expect that the dynamics of the compared songs would be different in general, but the featured parts of the Weeknd would be quite similar to the Weeknd’s own songs. The one thing that I would be unsure about, however, is to which degree these featured parts are similar to the Weeknd’s own songs. All in all, I think the tracks from my corpus are quite representative for the groups that I want to compare, since it is predominantly focused on one artist. However, I will not cover all songs produced by The Weeknd, so I must note that the analyses could differ substantially per song and comparison.
 
-test2
+To provide a better overview of my corpus, I have listed some examples of typical songs below. These songs I would consider typical, because they are one of the many songs that represent The Weeknd catalogue.
 
+Non-featured songs:
+
+  - Missed You - Bonus Track by The Weeknd
+  - Wicked Games by The Weeknd
+
+Featured songs:
+
+  - Or Nah by Ty Dolla $ign, The Weeknd, Wiz Khalifa and Mustard
+  - Creepin’ by Metro Boomin, The Weeknd and 21 Savage
+  
 ```{r}
+library(tidyverse)
+library(spotifyr)
+library(knitr)
+library(ggplot2)
+library(ggjoy)
+```
+
+### How does emotional valence affect The Weeknd's songs?  
+
+```{r, fig.width=10}
+weeknd_tracks <- get_track_audio_features(c("5SGEPm9ge10bD4j3ec9UHV"))
+weeknd_albumtracks <- get_album_tracks("742eAldb4AJKLoPgJhGRE7")
+weeknd <- get_artist_audio_features('the weeknd')
+corpus <- get_playlist_audio_features("", "4XcUvhRB3cwMXyN7Jy1C2H")
+corpus_feat <- get_playlist_audio_features("", "4TEjBviN4UjutCCpFKnUoD")
+
+valence_songs <- get_artist_audio_features('the weeknd')
+
+ggplot(valence_songs, aes(x = valence, y = album_name)) + 
+    geom_joy(scale = 0.9, fill="lightblue") + 
+    theme_joy() +
+    ggtitle("Valence distributions of the Weeknds's songs") + 
+    labs(x="Valence", y = "Album name")
 
 ```
 
-## Column {data-width="350"}
+***
 
-### Chart B
+test test
 
-```{r}
-
-```
-
-### Chart C
-
+### Concluding remarks
+listen to diff kinds of music
+besides listening to rb and hiphop, i like to listen to spanish music, namely reggaeton and urbano latino
+2 spanish songs where weeknd was featured 
 ```{r}
 
 ```
