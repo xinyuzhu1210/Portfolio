@@ -53,7 +53,9 @@ library(spotifyr)
 library(knitr)
 library(ggplot2)
 library(ggjoy)
+library(plotly)
 ```
+
 
 ### How does emotional valence affect The Weeknd's songs?  
 
@@ -77,6 +79,37 @@ ggplot(valence_songs, aes(x = valence, y = album_name)) +
 ***
 
 test test
+
+### test 
+```{r, fig.width=10}
+danceability_songs1 <- get_artist_audio_features('the weeknd')
+ggplot(danceability_songs1, aes(x = danceability, y = album_name)) + 
+    geom_joy(scale = 0.9, fill="lightblue") + 
+    theme_joy() +
+    ggtitle("Danceability distributions of the Weeknds's songs") +
+    labs(x="Danceability", y = "Album name")
+```
+
+***
+
+test 
+
+### test2
+```{r}
+audio_feat1 <- get_artist_audio_features('the weeknd')
+data <- audio_feat1 |> ggplot(aes(x = valence, y = danceability, color=energy, label = track_name )) + geom_point()  +
+         ggtitle("Analysis of the Weeknd's songs based on audio features") +
+         xlab("Valence") +
+         ylab("Danceability") +
+         labs(colour = "Energy") + geom_smooth()
+interactive <- ggplotly(data)
+interactive
+```
+
+***
+
+test 2
+
 
 ### Concluding remarks
 listen to diff kinds of music
