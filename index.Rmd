@@ -47,6 +47,7 @@ Featured songs:
   - Or Nah by Ty Dolla $ign, The Weeknd, Wiz Khalifa and Mustard
   - Creepin’ by Metro Boomin, The Weeknd and 21 Savage
   
+
 ```{r}
 library(tidyverse)
 library(spotifyr)
@@ -54,6 +55,11 @@ library(knitr)
 library(ggplot2)
 library(ggjoy)
 library(plotly)
+library(compmus)
+#library(tidymodels)
+#library(heatmaply)
+#library(protoclust)
+library(cowplot)
 ```
 
 
@@ -109,12 +115,74 @@ interactive
 That there was a difference in these feature scores was actually quite surprising, especially since one would expect a positive correlation between these features instead of a negative one, as can be seen in the scatterplot image. Not only that, but they both also positively correlate with the energy scores, which seems reasonable given their interplay with eachother. The interesting part would therefore be about the difference between the scatter plot correlations and the feature distributions. It would be fascinating to examine why the danceability scores were quite high, despite the low overall valence scores, and how it was affected by other audio features. 
 
 ### Chroma features
-listen to diff kinds of music
-besides listening to rb and hiphop, i like to listen to spanish music, namely reggaeton and urbano latino
-2 spanish songs where weeknd was featured 
+```{r pop-chroma}
+rosalia <-
+  get_tidy_audio_analysis("6Y46tOTRhkBamosyuWa6YX") |>
+  select(segments) |>
+  unnest(segments) |>
+  select(start, duration, pitches)
+
+maluma <-
+  get_tidy_audio_analysis("0GzuHFG4Ql6DoyxFRnIk3F") |>
+  select(segments) |>
+  unnest(segments) |>
+  select(start, duration, pitches)
+
+```
+
+
+```{r pop-chroma-plots}
+
+rosalia_plot <- rosalia |>
+  mutate(pitches = map(pitches, compmus_normalise, "euclidean")) |>
+  compmus_gather_chroma() |> 
+  ggplot(
+    aes(
+      x = start + duration / 2,
+      width = duration,
+      y = pitch_class,
+      fill = value
+    )
+  ) +
+  geom_tile() +
+  geom_vline(xintercept = 81, colour = "red") +
+  geom_vline(xintercept = 129, colour = "red") +
+  labs(x = "Time (s)", y = NULL, fill = "Magnitude", title = "LA FAMA by Rosalía and The Weeknd ") +
+  theme_minimal() +
+  scale_fill_viridis_c()
+
+maluma_plot <- maluma |>
+  mutate(pitches = map(pitches, compmus_normalise, "euclidean")) |>
+  compmus_gather_chroma() |> 
+  ggplot(
+    aes(
+      x = start + duration / 2,
+      width = duration,
+      y = pitch_class,
+      fill = value
+    )
+  ) +
+  geom_tile() +
+  geom_vline(xintercept = 26, colour = "red") +
+  labs(x = "Time (s)", y = NULL, fill = "Magnitude", title = "Hawái by Maluma and The Weeknd ") +
+  theme_minimal() +
+  scale_fill_viridis_c()
+
+plot_grid(rosalia_plot, maluma_plot, ncol = 1)
+
+```
+
+
+***
+Despite the fact that I like to listen to r&b and hip-hop songs, I would say that my music taste is a mix of different genres. Two of those genres fall under Spanish music, namely the genres reggaeton and urbano latino. Since it would be interesting to analyze "outlier" songs for the chromagram, I decided to chose the only two songs where The Weeknd was featured in Spanish songs. This way I hope to gain more insight into his music as an artist, even if he was featured in songs outside of his own genre. 
+
+In the first chromagram, you can see two distinct moments that really stand out in the song. These key moments (at 1:21 and 2:09) are very prominent, because not only the background music changes in those moments, but also the underlying beat itself disappears. All in all, these moments are very well integrated in the song, since they make the song more dynamic. 
+
+In the second chromagram something similar happens, but only in the beginning of the song. Here, The Weeknd's singing first served as an introduction with no beats in the background music. Then, at 0:26, the song seems to indicate its "start" by introducing a reggaeton type of beat that is repeated through the whole song. 
 
 ### Concluding remarks
 Still to be edited in the future
 ```{r}
+
 
 ```
