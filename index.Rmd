@@ -57,7 +57,7 @@ library(plotly)
 ```
 
 
-### How does emotional valence affect The Weeknd's songs?  
+### In your feelings
 
 ```{r, fig.width=10}
 weeknd_tracks <- get_track_audio_features(c("5SGEPm9ge10bD4j3ec9UHV"))
@@ -78,9 +78,9 @@ ggplot(valence_songs, aes(x = valence, y = album_name)) +
 
 ***
 
-test test
+To gain more insight into the Weeknd's music, I have first analyzed the underlying audio features of his songs alone. When looking at the Valence image, you can see that all of his albums has a quite low valence score (mostly below 0.5), which means that it is more likely to be associated with negative feelings.
 
-### test 
+### Let's dance?
 ```{r, fig.width=10}
 danceability_songs1 <- get_artist_audio_features('the weeknd')
 ggplot(danceability_songs1, aes(x = danceability, y = album_name)) + 
@@ -91,10 +91,9 @@ ggplot(danceability_songs1, aes(x = danceability, y = album_name)) +
 ```
 
 ***
+On the other hand, the Danceability score of his albums are more on the higher side (mostly above 0.5), which means that his songs are more danceable in general.
 
-test 
-
-### test2
+### How does emotional valence affect The Weeknd's songs?  
 ```{r}
 audio_feat1 <- get_artist_audio_features('the weeknd')
 data <- audio_feat1 |> ggplot(aes(x = valence, y = danceability, color=energy, label = track_name )) + geom_point()  +
@@ -107,14 +106,15 @@ interactive
 ```
 
 ***
+That there was a difference in these feature scores was actually quite surprising, especially since one would expect a positive correlation between these features instead of a negative one, as can be seen in the scatterplot image. Not only that, but they both also positively correlate with the energy scores, which seems reasonable given their interplay with eachother. The interesting part would therefore be about the difference between the scatter plot correlations and the feature distributions. It would be fascinating to examine why the danceability scores were quite high, despite the low overall valence scores, and how it was affected by other audio features. 
 
-test 2
-
-
-### Concluding remarks
+### Chroma features
 listen to diff kinds of music
 besides listening to rb and hiphop, i like to listen to spanish music, namely reggaeton and urbano latino
 2 spanish songs where weeknd was featured 
+
+### Concluding remarks
+Still to be edited in the future
 ```{r}
 
 ```
