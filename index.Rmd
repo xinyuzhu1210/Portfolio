@@ -44,7 +44,400 @@ library(compmus)
 #library(protoclust)
 library(cowplot)
 ```
-### Newest tab: Comparing chroma-based and timbre-based self-similarity matrices
+
+### Keygrams 1
+
+```{r}
+circshift <- function(v, n) {
+  if (n == 0) v else c(tail(v, n), head(v, -n))
+}
+
+#      C     C#    D     Eb    E     F     F#    G     Ab    A     Bb    B
+major_chord <-
+  c(   1,    0,    0,    0,    1,    0,    0,    1,    0,    0,    0,    0)
+minor_chord <-
+  c(   1,    0,    0,    1,    0,    0,    0,    1,    0,    0,    0,    0)
+seventh_chord <-
+  c(   1,    0,    0,    0,    1,    0,    0,    1,    0,    0,    1,    0)
+
+major_key <-
+  c(6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88)
+minor_key <-
+  c(6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17)
+
+chord_templates <-
+  tribble(
+    ~name, ~template,
+    "Gb:7", circshift(seventh_chord, 6),
+    "Gb:maj", circshift(major_chord, 6),
+    "Bb:min", circshift(minor_chord, 10),
+    "Db:maj", circshift(major_chord, 1),
+    "F:min", circshift(minor_chord, 5),
+    "Ab:7", circshift(seventh_chord, 8),
+    "Ab:maj", circshift(major_chord, 8),
+    "C:min", circshift(minor_chord, 0),
+    "Eb:7", circshift(seventh_chord, 3),
+    "Eb:maj", circshift(major_chord, 3),
+    "G:min", circshift(minor_chord, 7),
+    "Bb:7", circshift(seventh_chord, 10),
+    "Bb:maj", circshift(major_chord, 10),
+    "D:min", circshift(minor_chord, 2),
+    "F:7", circshift(seventh_chord, 5),
+    "F:maj", circshift(major_chord, 5),
+    "A:min", circshift(minor_chord, 9),
+    "C:7", circshift(seventh_chord, 0),
+    "C:maj", circshift(major_chord, 0),
+    "E:min", circshift(minor_chord, 4),
+    "G:7", circshift(seventh_chord, 7),
+    "G:maj", circshift(major_chord, 7),
+    "B:min", circshift(minor_chord, 11),
+    "D:7", circshift(seventh_chord, 2),
+    "D:maj", circshift(major_chord, 2),
+    "F#:min", circshift(minor_chord, 6),
+    "A:7", circshift(seventh_chord, 9),
+    "A:maj", circshift(major_chord, 9),
+    "C#:min", circshift(minor_chord, 1),
+    "E:7", circshift(seventh_chord, 4),
+    "E:maj", circshift(major_chord, 4),
+    "G#:min", circshift(minor_chord, 8),
+    "B:7", circshift(seventh_chord, 11),
+    "B:maj", circshift(major_chord, 11),
+    "D#:min", circshift(minor_chord, 3)
+  )
+
+key_templates <-
+  tribble(
+    ~name, ~template,
+    "Gb:maj", circshift(major_key, 6),
+    "Bb:min", circshift(minor_key, 10),
+    "Db:maj", circshift(major_key, 1),
+    "F:min", circshift(minor_key, 5),
+    "Ab:maj", circshift(major_key, 8),
+    "C:min", circshift(minor_key, 0),
+    "Eb:maj", circshift(major_key, 3),
+    "G:min", circshift(minor_key, 7),
+    "Bb:maj", circshift(major_key, 10),
+    "D:min", circshift(minor_key, 2),
+    "F:maj", circshift(major_key, 5),
+    "A:min", circshift(minor_key, 9),
+    "C:maj", circshift(major_key, 0),
+    "E:min", circshift(minor_key, 4),
+    "G:maj", circshift(major_key, 7),
+    "B:min", circshift(minor_key, 11),
+    "D:maj", circshift(major_key, 2),
+    "F#:min", circshift(minor_key, 6),
+    "A:maj", circshift(major_key, 9),
+    "C#:min", circshift(minor_key, 1),
+    "E:maj", circshift(major_key, 4),
+    "G#:min", circshift(minor_key, 8),
+    "B:maj", circshift(major_key, 11),
+    "D#:min", circshift(minor_key, 3)
+  )
+```
+
+
+```{r}
+creepin <-
+  get_tidy_audio_analysis("2dHHgzDwk4BJdRwy9uXhTO") |>
+  compmus_align(sections, segments) |>
+  select(sections) |>
+  unnest(sections) |>
+  mutate(
+    pitches =
+      map(segments,
+        compmus_summarise, pitches,
+        method = "mean", norm = "manhattan"
+      )
+  )
+```
+
+```{r}
+creepin |> 
+  compmus_match_pitch_template(
+    key_templates,         # Change to chord_templates if descired
+    method = "euclidean",  # Try different distance metrics
+    norm = "manhattan"     # Try different norms
+  ) |>
+  ggplot(
+    aes(x = start + duration / 2, width = duration, y = name, fill = d)
+  ) +
+  geom_tile() +
+  scale_fill_viridis_c(guide = "none") +
+  theme_minimal() +
+  labs(x = "Time (s)", y = "")
+```
+
+***
+
+The pattern in this keygram is not immediately clear, but if you look closely, you can see that the main key is C sharp minor. This result is very suiting, since the song is more of an emotional one and the C sharp minor key tends to evoke a dark, passionate, melancholic and sad mood. 
+
+
+### Keygram 2
+```{r}
+#out of time
+out_of_time <-
+  get_tidy_audio_analysis("2SLwbpExuoBDZBpjfefCtV") |>
+  compmus_align(sections, segments) |>
+  select(sections) |>
+  unnest(sections) |>
+  mutate(
+    pitches =
+      map(segments,
+        compmus_summarise, pitches,
+        method = "mean", norm = "manhattan"
+      )
+  )
+
+```
+
+```{r}
+out_of_time |> 
+  compmus_match_pitch_template(
+    key_templates,         # Change to chord_templates if descired
+    method = "euclidean",  # Try different distance metrics
+    norm = "manhattan"     # Try different norms
+  ) |>
+  ggplot(
+    aes(x = start + duration / 2, width = duration, y = name, fill = d)
+  ) +
+  geom_tile() +
+  scale_fill_viridis_c(guide = "none") +
+  theme_minimal() +
+  labs(x = "Time (s)", y = "")
+```
+
+
+*** 
+
+The pattern in this keygram is very prominent, since the C minor key is much darker than the other keys. Just like the previous keygram, the emphasis on this main key is also quite fitting. This particular song is considered more on the "happy" side with a slight touch of sadness. This sadness is not only highlighted by the love-sick undertone of the song, but also cultivated by the C minor key, which fosters the feelings of (unhappy) love and the longing for love.   
+
+
+### draft tab 1: Comparing the timbre coefficients of both corpora 
+```{r}
+corpus <-
+  get_playlist_audio_features(
+    "",
+    "4XcUvhRB3cwMXyN7Jy1C2H"
+  ) |>
+  slice(1:30) |>
+  add_audio_analysis()
+corpus_feat <-
+  get_playlist_audio_features(
+    "",
+    "4TEjBviN4UjutCCpFKnUoD"
+  ) |>
+  slice(1:30) |>
+  add_audio_analysis()
+```
+
+```{r}
+jazz <-
+  corpus |>
+  mutate(genre = "The Weeknd's songs") |>
+  bind_rows(corpus_feat |> mutate(genre = "Songs featuring The Weeknd"))
+
+jazz |>
+  mutate(
+    timbre =
+      map(
+        segments,
+        compmus_summarise,
+        timbre,
+        method = "mean"
+      )
+  ) |>
+  select(genre, timbre) |>
+  compmus_gather_timbre() |>
+  ggplot(aes(x = basis, y = value, fill = genre)) +
+  geom_violin() +
+  scale_fill_viridis_d() +
+  labs(x = "Spotify Timbre Coefficients", y = "", fill = "Corpus")
+
+```
+
+***
+
+Still to be edited.
+
+### draft tab 2: Track-Level summaries
+```{r}
+jazz |>
+  mutate(
+    sections =
+      map(
+        sections,                                    # sections or segments
+        summarise_at,
+        vars(tempo, loudness, duration),             # features of interest
+        list(section_mean = mean, section_sd = sd)   # aggregation functions
+      )
+  ) |>
+  unnest(sections) |>
+  ggplot(
+    aes(
+      x = tempo,
+      y = tempo_section_sd,
+      colour = genre,
+      alpha = loudness
+    )
+  ) +
+  geom_point(aes(size = duration / 60)) +
+  geom_rug() +
+  theme_minimal() +
+  ylim(0, 5) +
+  labs(
+    x = "Mean Tempo (bpm)",
+    y = "SD Tempo",
+    colour = "Corpus",
+    size = "Duration (min)",
+    alpha = "Volume (dBFS)"
+  )
+```
+
+***
+
+Still to be edited.
+
+### Corpus description
+
+The portfolio focuses on a corpus that consists of songs made by The Weeknd as well as songs featured by The Weeknd. I decided to analyse this specific kind of corpus, because The Weeknd was the most listened artist from my sportify wrapped and I was interested in the factors that made me drawn to his music. To make the analyses more concrete, I decided to compare different points from the corpus, namely the songs from The Weeknd and the songs that he was featured in. Specifically, I will first examine the songs from The Weeknd to gain a greater insight from his music and then I will evaluate to what extend the music changes when he is featured in songs of other artists. This way I hope to discover what characteristics in his music make him distinctive as an artist, even in the featured songs. As a matter of fact, I expect that the dynamics of the compared songs would be different in general, but the featured parts of the Weeknd would be quite similar to the Weeknd’s own songs. The one thing that I would be unsure about, however, is to which degree these featured parts are similar to the Weeknd’s own songs. All in all, I think the tracks from my corpus are quite representative for the groups that I want to compare, since it is predominantly focused on one artist. However, I will not cover all songs produced by The Weeknd, so I must note that the analyses could differ substantially per song and comparison.
+
+To provide a better overview of my corpus, I have listed some examples of typical songs below. These songs I would consider typical, because they are one of the many songs that represent The Weeknd catalogue.
+
+Non-featured songs:
+
+  - Missed You - Bonus Track by The Weeknd
+  - Wicked Games by The Weeknd
+
+Featured songs:
+
+  - Or Nah by Ty Dolla $ign, The Weeknd, Wiz Khalifa and Mustard
+  - Creepin’ by Metro Boomin, The Weeknd and 21 Savage
+  
+
+### In your feelings
+
+```{r}
+weeknd <- get_artist_audio_features('the weeknd')
+valence_songs <- weeknd
+
+```
+
+```{r, fig.width=10}
+ggplot(valence_songs, aes(x = valence, y = album_name)) + 
+    geom_joy(scale = 0.9, fill="lightblue") + 
+    theme_joy() +
+    ggtitle("Valence distributions of the Weeknds's songs") + 
+    labs(x="Valence", y = "Album name")
+```
+
+
+***
+
+To gain more insight into the Weeknd's music, I have first analyzed the underlying audio features of his songs alone. When looking at the Valence image, you can see that all of his albums has a quite low valence score (mostly below 0.5), which means that it is more likely to be associated with negative feelings.
+
+### Let's dance?
+```{r}
+danceability_songs1 <- weeknd
+```
+
+```{r, fig.width=10}
+ggplot(danceability_songs1, aes(x = danceability, y = album_name)) + 
+    geom_joy(scale = 0.9, fill="lightblue") + 
+    theme_joy() +
+    ggtitle("Danceability distributions of the Weeknds's songs") +
+    labs(x="Danceability", y = "Album name")
+```
+
+
+***
+On the other hand, the Danceability score of his albums are more on the higher side (mostly above 0.5), which means that his songs are more danceable in general.
+
+### How does emotional valence affect The Weeknd's songs?  
+```{r}
+audio_feat1 <- weeknd
+```
+
+
+```{r}
+data <- audio_feat1 |> ggplot(aes(x = valence, y = danceability, color=energy, label = track_name )) + geom_point()  +
+         ggtitle("Analysis of the Weeknd's songs based on audio features") +
+         xlab("Valence") +
+         ylab("Danceability") +
+         labs(colour = "Energy") + geom_smooth()
+interactive <- ggplotly(data)
+interactive
+```
+
+
+***
+That there was a difference in these feature scores was actually quite surprising, especially since one would expect a positive correlation between these features instead of a negative one, as can be seen in the scatterplot image. Not only that, but they both also positively correlate with the energy scores, which seems reasonable given their interplay with eachother. The interesting part would therefore be about the difference between the scatter plot correlations and the feature distributions. It would be fascinating to examine why the danceability scores were quite high, despite the low overall valence scores, and how it was affected by other audio features. 
+
+### Chroma features
+```{r pop-chroma}
+rosalia <-
+  get_tidy_audio_analysis("77VjuBo3CJbamC3gzaUzK9") |>
+  select(segments) |>
+  unnest(segments) |>
+  select(start, duration, pitches)
+
+maluma <-
+  get_tidy_audio_analysis("0GzuHFG4Ql6DoyxFRnIk3F") |>
+  select(segments) |>
+  unnest(segments) |>
+  select(start, duration, pitches)
+
+```
+
+
+```{r pop-chroma-plots} 
+
+rosalia_plot <- rosalia |>
+  mutate(pitches = map(pitches, compmus_normalise, "euclidean")) |>
+  compmus_gather_chroma() |> 
+  ggplot(
+    aes(
+      x = start + duration / 2,
+      width = duration,
+      y = pitch_class,
+      fill = value
+    )
+  ) +
+  geom_tile() +
+  geom_vline(xintercept = 81, colour = "orange") +
+  geom_vline(xintercept = 129, colour = "orange") +
+  labs(x = "Time (s)", y = NULL, fill = "Magnitude", title = "LA FAMA by Rosalía and The Weeknd ") +
+  theme_minimal() +
+  scale_fill_viridis_c()
+
+maluma_plot <- maluma |>
+  mutate(pitches = map(pitches, compmus_normalise, "euclidean")) |>
+  compmus_gather_chroma() |> 
+  ggplot(
+    aes(
+      x = start + duration / 2,
+      width = duration,
+      y = pitch_class,
+      fill = value
+    )
+  ) +
+  geom_tile() +
+  geom_vline(xintercept = 26, colour = "orange") +
+  labs(x = "Time (s)", y = NULL, fill = "Magnitude", title = "Hawái by Maluma and The Weeknd ") +
+  theme_minimal() +
+  scale_fill_viridis_c()
+
+plot_grid(rosalia_plot, maluma_plot, ncol = 1)
+```
+
+
+***
+Despite the fact that I like to listen to r&b and hip-hop songs, I would say that my music taste is a mix of different genres. Two of those genres fall under Spanish music, namely the genres reggaeton and urbano latino. Since it would be interesting to analyze "outlier" songs for the chromagram, I decided to chose the only two songs where The Weeknd was featured in Spanish songs. This way I hope to gain more insight into his music as an artist, even if he was featured in songs outside of his own genre. 
+
+In the first chromagram, you can see two distinct moments that really stand out in the song. These key moments (at 1:21 and 2:09) are very prominent, because not only the background music changes in those moments, but also the underlying beat itself disappears. All in all, these moments are very well integrated in the song, since they make the song more dynamic. 
+
+In the second chromagram something similar happens, but only in the beginning of the song. Here, The Weeknd's singing first served as an introduction with no beats in the background music. Then, at 0:26, the song seems to indicate its "start" by introducing a reggaeton type of beat that is repeated through the whole song. 
+
+### Comparing chroma-based and timbre-based self-similarity matrices
 ```{r}
 rosalia_self <-
   get_tidy_audio_analysis("6Y46tOTRhkBamosyuWa6YX") |>
@@ -65,6 +458,11 @@ rosalia_self <-
         method = "mean"
       )
   )
+
+
+```
+
+```{r}
 rosalia_self_plot <- bind_rows(
   rosalia_self |>
     compmus_self_similarity(pitches, "aitchison") |>
@@ -90,8 +488,10 @@ rosalia_self_plot <- bind_rows(
   theme_classic() +
   labs(x = "", y = "", title = "Comparison for the song LA FAMA")
 
+```
 
 
+```{r}
 maluma_self <-
   get_tidy_audio_analysis("0GzuHFG4Ql6DoyxFRnIk3F") |>
   compmus_align(bars, segments) |>
@@ -111,6 +511,9 @@ maluma_self <-
         method = "mean"
       )
   )
+```
+
+```{r}
 maluma_self_plot <- bind_rows(
   maluma_self |>
     compmus_self_similarity(pitches, "aitchison") |>
@@ -139,162 +542,11 @@ maluma_self_plot <- bind_rows(
 plot_grid(rosalia_self_plot, maluma_self_plot, ncol = 1)
 ```
 
+
+
 ***
 
 For now I have decided to make two chroma-based and timbre-based self-similarity matrices. The songs that I have chosen here are the same as in the chroma features tab. The reason for this is that I hope to gain further insight into these songs by discovering the underlying patterns that were previously not shown in the chromagrams. Nonetheless, I must say that I did not manage to analyze both plots yet, since I still had some difficulties with reading the plots precisely and correctly. Not only that, but I currently still have some doubts about the song choices (eg whether it would be more interesting to choose other songs than the same songs of the chroma features tab) and the displayed formats of these plots (eg whether to plot them in separate tabs to make the format bigger of just display them as how it now is). Overall, you could say that this tab is still a draft version with much room for improvement, which ultimately still need to be perfected.
 
-### Corpus description
-
-The portfolio focuses on a corpus that consists of songs made by The Weeknd as well as songs featured by The Weeknd. I decided to analyse this specific kind of corpus, because The Weeknd was the most listened artist from my sportify wrapped and I was interested in the factors that made me drawn to his music. To make the analyses more concrete, I decided to compare different points from the corpus, namely the songs from The Weeknd and the songs that he was featured in. Specifically, I will first examine the songs from The Weeknd to gain a greater insight from his music and then I will evaluate to what extend the music changes when he is featured in songs of other artists. This way I hope to discover what characteristics in his music make him distinctive as an artist, even in the featured songs. As a matter of fact, I expect that the dynamics of the compared songs would be different in general, but the featured parts of the Weeknd would be quite similar to the Weeknd’s own songs. The one thing that I would be unsure about, however, is to which degree these featured parts are similar to the Weeknd’s own songs. All in all, I think the tracks from my corpus are quite representative for the groups that I want to compare, since it is predominantly focused on one artist. However, I will not cover all songs produced by The Weeknd, so I must note that the analyses could differ substantially per song and comparison.
-
-To provide a better overview of my corpus, I have listed some examples of typical songs below. These songs I would consider typical, because they are one of the many songs that represent The Weeknd catalogue.
-
-Non-featured songs:
-
-  - Missed You - Bonus Track by The Weeknd
-  - Wicked Games by The Weeknd
-
-Featured songs:
-
-  - Or Nah by Ty Dolla $ign, The Weeknd, Wiz Khalifa and Mustard
-  - Creepin’ by Metro Boomin, The Weeknd and 21 Savage
-  
-
-```{r}
-#library(tidyverse)
-#library(spotifyr)
-#library(knitr)
-#library(ggplot2)
-#library(ggjoy)
-#library(plotly)
-#library(compmus)
-#library(tidymodels)
-#library(heatmaply)
-#library(protoclust)
-#library(cowplot)
-```
-
-
-### In your feelings
-
-```{r, fig.width=10}
-weeknd_tracks <- get_track_audio_features(c("5SGEPm9ge10bD4j3ec9UHV"))
-weeknd_albumtracks <- get_album_tracks("742eAldb4AJKLoPgJhGRE7")
-weeknd <- get_artist_audio_features('the weeknd')
-corpus <- get_playlist_audio_features("", "4XcUvhRB3cwMXyN7Jy1C2H")
-corpus_feat <- get_playlist_audio_features("", "4TEjBviN4UjutCCpFKnUoD")
-
-valence_songs <- get_artist_audio_features('the weeknd')
-
-ggplot(valence_songs, aes(x = valence, y = album_name)) + 
-    geom_joy(scale = 0.9, fill="lightblue") + 
-    theme_joy() +
-    ggtitle("Valence distributions of the Weeknds's songs") + 
-    labs(x="Valence", y = "Album name")
-
-```
-
-***
-
-To gain more insight into the Weeknd's music, I have first analyzed the underlying audio features of his songs alone. When looking at the Valence image, you can see that all of his albums has a quite low valence score (mostly below 0.5), which means that it is more likely to be associated with negative feelings.
-
-### Let's dance?
-```{r, fig.width=10}
-danceability_songs1 <- get_artist_audio_features('the weeknd')
-ggplot(danceability_songs1, aes(x = danceability, y = album_name)) + 
-    geom_joy(scale = 0.9, fill="lightblue") + 
-    theme_joy() +
-    ggtitle("Danceability distributions of the Weeknds's songs") +
-    labs(x="Danceability", y = "Album name")
-```
-
-***
-On the other hand, the Danceability score of his albums are more on the higher side (mostly above 0.5), which means that his songs are more danceable in general.
-
-### How does emotional valence affect The Weeknd's songs?  
-```{r}
-audio_feat1 <- get_artist_audio_features('the weeknd')
-data <- audio_feat1 |> ggplot(aes(x = valence, y = danceability, color=energy, label = track_name )) + geom_point()  +
-         ggtitle("Analysis of the Weeknd's songs based on audio features") +
-         xlab("Valence") +
-         ylab("Danceability") +
-         labs(colour = "Energy") + geom_smooth()
-interactive <- ggplotly(data)
-interactive
-```
-
-***
-That there was a difference in these feature scores was actually quite surprising, especially since one would expect a positive correlation between these features instead of a negative one, as can be seen in the scatterplot image. Not only that, but they both also positively correlate with the energy scores, which seems reasonable given their interplay with eachother. The interesting part would therefore be about the difference between the scatter plot correlations and the feature distributions. It would be fascinating to examine why the danceability scores were quite high, despite the low overall valence scores, and how it was affected by other audio features. 
-
-### Chroma features
-```{r pop-chroma}
-rosalia <-
-  get_tidy_audio_analysis("6Y46tOTRhkBamosyuWa6YX") |>
-  select(segments) |>
-  unnest(segments) |>
-  select(start, duration, pitches)
-
-maluma <-
-  get_tidy_audio_analysis("0GzuHFG4Ql6DoyxFRnIk3F") |>
-  select(segments) |>
-  unnest(segments) |>
-  select(start, duration, pitches)
-
-```
-
-
-```{r pop-chroma-plots}
-
-rosalia_plot <- rosalia |>
-  mutate(pitches = map(pitches, compmus_normalise, "euclidean")) |>
-  compmus_gather_chroma() |> 
-  ggplot(
-    aes(
-      x = start + duration / 2,
-      width = duration,
-      y = pitch_class,
-      fill = value
-    )
-  ) +
-  geom_tile() +
-  geom_vline(xintercept = 81, colour = "red") +
-  geom_vline(xintercept = 129, colour = "red") +
-  labs(x = "Time (s)", y = NULL, fill = "Magnitude", title = "LA FAMA by Rosalía and The Weeknd ") +
-  theme_minimal() +
-  scale_fill_viridis_c()
-
-maluma_plot <- maluma |>
-  mutate(pitches = map(pitches, compmus_normalise, "euclidean")) |>
-  compmus_gather_chroma() |> 
-  ggplot(
-    aes(
-      x = start + duration / 2,
-      width = duration,
-      y = pitch_class,
-      fill = value
-    )
-  ) +
-  geom_tile() +
-  geom_vline(xintercept = 26, colour = "red") +
-  labs(x = "Time (s)", y = NULL, fill = "Magnitude", title = "Hawái by Maluma and The Weeknd ") +
-  theme_minimal() +
-  scale_fill_viridis_c()
-
-plot_grid(rosalia_plot, maluma_plot, ncol = 1)
-
-```
-
-
-***
-Despite the fact that I like to listen to r&b and hip-hop songs, I would say that my music taste is a mix of different genres. Two of those genres fall under Spanish music, namely the genres reggaeton and urbano latino. Since it would be interesting to analyze "outlier" songs for the chromagram, I decided to chose the only two songs where The Weeknd was featured in Spanish songs. This way I hope to gain more insight into his music as an artist, even if he was featured in songs outside of his own genre. 
-
-In the first chromagram, you can see two distinct moments that really stand out in the song. These key moments (at 1:21 and 2:09) are very prominent, because not only the background music changes in those moments, but also the underlying beat itself disappears. All in all, these moments are very well integrated in the song, since they make the song more dynamic. 
-
-In the second chromagram something similar happens, but only in the beginning of the song. Here, The Weeknd's singing first served as an introduction with no beats in the background music. Then, at 0:26, the song seems to indicate its "start" by introducing a reggaeton type of beat that is repeated through the whole song. 
-
 ### Concluding remarks
 Still to be edited in the future
-```{r}
-
-
-```
