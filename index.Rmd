@@ -45,286 +45,48 @@ library(compmus)
 library(cowplot)
 ```
 
-### test 1
+### Is The Weeknd distinguisable? 
 ```{r}
 #wicked games
-graveola <- get_tidy_audio_analysis("6VwBbL8CzPiC4QV66ay7oR")
+wicked_games <- get_tidy_audio_analysis("6VwBbL8CzPiC4QV66ay7oR")
 ```
 
 ```{r}
-graveola |>
+plot_wicked_games <- wicked_games |>
   tempogram(window_size = 8, hop_size = 1, cyclic = FALSE) |>
   ggplot(aes(x = time, y = bpm, fill = power)) +
   geom_raster() +
   scale_fill_viridis_c(guide = "none") +
-  labs(x = "Time (s)", y = "Tempo (BPM)") +
+  labs(x = "Time (s)", y = "Tempo (BPM)", title="Wicked Games by The Weeknd") +
   theme_classic()
 ```
 
 
-### test 2
 ```{r}
-graveola |>
-  tempogram(window_size = 8, hop_size = 1, cyclic = TRUE) |>
+# better believe
+better_believe <- get_tidy_audio_analysis("2WN7xpcY4zmcqF57HFEGZY")
+```
+
+```{r}
+plot_better_believe <- better_believe |>
+  tempogram(window_size = 8, hop_size = 1, cyclic = FALSE) |>
   ggplot(aes(x = time, y = bpm, fill = power)) +
   geom_raster() +
   scale_fill_viridis_c(guide = "none") +
-  labs(x = "Time (s)", y = "Tempo (BPM)") +
+  labs(x = "Time (s)", y = "Tempo (BPM)", title="Better Believe by Belly, The Weeknd and Young Thug") +
   theme_classic()
 ```
 
 
-### Keygrams 1
-
 ```{r}
-circshift <- function(v, n) {
-  if (n == 0) v else c(tail(v, n), head(v, -n))
-}
-
-#      C     C#    D     Eb    E     F     F#    G     Ab    A     Bb    B
-major_chord <-
-  c(   1,    0,    0,    0,    1,    0,    0,    1,    0,    0,    0,    0)
-minor_chord <-
-  c(   1,    0,    0,    1,    0,    0,    0,    1,    0,    0,    0,    0)
-seventh_chord <-
-  c(   1,    0,    0,    0,    1,    0,    0,    1,    0,    0,    1,    0)
-
-major_key <-
-  c(6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88)
-minor_key <-
-  c(6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17)
-
-chord_templates <-
-  tribble(
-    ~name, ~template,
-    "Gb:7", circshift(seventh_chord, 6),
-    "Gb:maj", circshift(major_chord, 6),
-    "Bb:min", circshift(minor_chord, 10),
-    "Db:maj", circshift(major_chord, 1),
-    "F:min", circshift(minor_chord, 5),
-    "Ab:7", circshift(seventh_chord, 8),
-    "Ab:maj", circshift(major_chord, 8),
-    "C:min", circshift(minor_chord, 0),
-    "Eb:7", circshift(seventh_chord, 3),
-    "Eb:maj", circshift(major_chord, 3),
-    "G:min", circshift(minor_chord, 7),
-    "Bb:7", circshift(seventh_chord, 10),
-    "Bb:maj", circshift(major_chord, 10),
-    "D:min", circshift(minor_chord, 2),
-    "F:7", circshift(seventh_chord, 5),
-    "F:maj", circshift(major_chord, 5),
-    "A:min", circshift(minor_chord, 9),
-    "C:7", circshift(seventh_chord, 0),
-    "C:maj", circshift(major_chord, 0),
-    "E:min", circshift(minor_chord, 4),
-    "G:7", circshift(seventh_chord, 7),
-    "G:maj", circshift(major_chord, 7),
-    "B:min", circshift(minor_chord, 11),
-    "D:7", circshift(seventh_chord, 2),
-    "D:maj", circshift(major_chord, 2),
-    "F#:min", circshift(minor_chord, 6),
-    "A:7", circshift(seventh_chord, 9),
-    "A:maj", circshift(major_chord, 9),
-    "C#:min", circshift(minor_chord, 1),
-    "E:7", circshift(seventh_chord, 4),
-    "E:maj", circshift(major_chord, 4),
-    "G#:min", circshift(minor_chord, 8),
-    "B:7", circshift(seventh_chord, 11),
-    "B:maj", circshift(major_chord, 11),
-    "D#:min", circshift(minor_chord, 3)
-  )
-
-key_templates <-
-  tribble(
-    ~name, ~template,
-    "Gb:maj", circshift(major_key, 6),
-    "Bb:min", circshift(minor_key, 10),
-    "Db:maj", circshift(major_key, 1),
-    "F:min", circshift(minor_key, 5),
-    "Ab:maj", circshift(major_key, 8),
-    "C:min", circshift(minor_key, 0),
-    "Eb:maj", circshift(major_key, 3),
-    "G:min", circshift(minor_key, 7),
-    "Bb:maj", circshift(major_key, 10),
-    "D:min", circshift(minor_key, 2),
-    "F:maj", circshift(major_key, 5),
-    "A:min", circshift(minor_key, 9),
-    "C:maj", circshift(major_key, 0),
-    "E:min", circshift(minor_key, 4),
-    "G:maj", circshift(major_key, 7),
-    "B:min", circshift(minor_key, 11),
-    "D:maj", circshift(major_key, 2),
-    "F#:min", circshift(minor_key, 6),
-    "A:maj", circshift(major_key, 9),
-    "C#:min", circshift(minor_key, 1),
-    "E:maj", circshift(major_key, 4),
-    "G#:min", circshift(minor_key, 8),
-    "B:maj", circshift(major_key, 11),
-    "D#:min", circshift(minor_key, 3)
-  )
+plot_grid(plot_wicked_games, plot_better_believe, ncol = 1)
 ```
-
-
-```{r}
-creepin <-
-  get_tidy_audio_analysis("2dHHgzDwk4BJdRwy9uXhTO") |>
-  compmus_align(sections, segments) |>
-  select(sections) |>
-  unnest(sections) |>
-  mutate(
-    pitches =
-      map(segments,
-        compmus_summarise, pitches,
-        method = "mean", norm = "manhattan"
-      )
-  )
-```
-
-```{r}
-creepin |> 
-  compmus_match_pitch_template(
-    key_templates,         # Change to chord_templates if descired
-    method = "euclidean",  # Try different distance metrics
-    norm = "manhattan"     # Try different norms
-  ) |>
-  ggplot(
-    aes(x = start + duration / 2, width = duration, y = name, fill = d)
-  ) +
-  geom_tile() +
-  scale_fill_viridis_c(guide = "none") +
-  theme_minimal() +
-  labs(x = "Time (s)", y = "")
-```
-
-***
-
-The pattern in this keygram is not immediately clear, but if you look closely, you can see that the main key is C sharp minor. This result is very suiting, since the song is more of an emotional one and the C sharp minor key tends to evoke a dark, passionate, melancholic and sad mood. 
-
-
-### Keygram 2
-```{r}
-#out of time
-out_of_time <-
-  get_tidy_audio_analysis("2SLwbpExuoBDZBpjfefCtV") |>
-  compmus_align(sections, segments) |>
-  select(sections) |>
-  unnest(sections) |>
-  mutate(
-    pitches =
-      map(segments,
-        compmus_summarise, pitches,
-        method = "mean", norm = "manhattan"
-      )
-  )
-
-```
-
-```{r}
-out_of_time |> 
-  compmus_match_pitch_template(
-    key_templates,         # Change to chord_templates if descired
-    method = "euclidean",  # Try different distance metrics
-    norm = "manhattan"     # Try different norms
-  ) |>
-  ggplot(
-    aes(x = start + duration / 2, width = duration, y = name, fill = d)
-  ) +
-  geom_tile() +
-  scale_fill_viridis_c(guide = "none") +
-  theme_minimal() +
-  labs(x = "Time (s)", y = "")
-```
-
 
 *** 
 
-The pattern in this keygram is very prominent, since the C minor key is much darker than the other keys. Just like the previous keygram, the emphasis on this main key is also quite fitting. This particular song is considered more on the "happy" side with a slight touch of sadness. This sadness is not only highlighted by the love-sick undertone of the song, but also cultivated by the C minor key, which fosters the feelings of (unhappy) love and the longing for love.   
+One thing that I have noticed about The Weeknd is that most of his songs have a very steady tempo. This consistency in tempo can also be seen in the song Wicked Games, which, in my opinion, is quite representative for The Weeknd's music style as it evokes a melancholic, sultry and dark mood. In the corresponding tempogram, you can thus see that the song has a tempo around 230 BPM throughout the entire song, which may seem ordinary at first hand, but is in fact very insightful when detecting his voice in the featured songs. In the second tempogram, one of his featured songs is displayed and it immediately shows a difference in the steadiness of the song tempo. This song also has a main tempo of approximately 230 BPM, but in contrast with the previous song, it also has moments with a lower or higher tempo than 230 BPM. The interesting part about this result is that the moments with a tempo of 230 BPM are the moments where The Weeknd sings, with the exception of the song intro (0:00-0:49 minutes), and all other moments are sung by the other artists. Knowing this, we could thus say that in this particular featured song, The Weeknd's voice is distinguisable. This, in turn, is very insightful since it could explain why The Weeknd stands out as an artist. 
 
 
-### draft tab 1: Comparing the timbre coefficients of both corpora 
-```{r}
-corpus <-
-  get_playlist_audio_features(
-    "",
-    "4XcUvhRB3cwMXyN7Jy1C2H"
-  ) |>
-  slice(1:30) |>
-  add_audio_analysis()
-corpus_feat <-
-  get_playlist_audio_features(
-    "",
-    "4TEjBviN4UjutCCpFKnUoD"
-  ) |>
-  slice(1:30) |>
-  add_audio_analysis()
-```
-
-```{r}
-jazz <-
-  corpus |>
-  mutate(genre = "The Weeknd's songs") |>
-  bind_rows(corpus_feat |> mutate(genre = "Songs featuring The Weeknd"))
-
-jazz |>
-  mutate(
-    timbre =
-      map(
-        segments,
-        compmus_summarise,
-        timbre,
-        method = "mean"
-      )
-  ) |>
-  select(genre, timbre) |>
-  compmus_gather_timbre() |>
-  ggplot(aes(x = basis, y = value, fill = genre)) +
-  geom_violin() +
-  scale_fill_viridis_d() +
-  labs(x = "Spotify Timbre Coefficients", y = "", fill = "Corpus")
-
-```
-
-***
-
-Still to be edited.
-
-### draft tab 2: Track-Level summaries
-```{r}
-jazz |>
-  mutate(
-    sections =
-      map(
-        sections,                                    # sections or segments
-        summarise_at,
-        vars(tempo, loudness, duration),             # features of interest
-        list(section_mean = mean, section_sd = sd)   # aggregation functions
-      )
-  ) |>
-  unnest(sections) |>
-  ggplot(
-    aes(
-      x = tempo,
-      y = tempo_section_sd,
-      colour = genre,
-      alpha = loudness
-    )
-  ) +
-  geom_point(aes(size = duration / 60)) +
-  geom_rug() +
-  theme_minimal() +
-  ylim(0, 5) +
-  labs(
-    x = "Mean Tempo (bpm)",
-    y = "SD Tempo",
-    colour = "Corpus",
-    size = "Duration (min)",
-    alpha = "Volume (dBFS)"
-  )
-```
-
-***
-
-Still to be edited.
 
 ### Corpus description
 
@@ -576,6 +338,263 @@ plot_grid(rosalia_self_plot, maluma_self_plot, ncol = 1)
 ***
 
 For now I have decided to make two chroma-based and timbre-based self-similarity matrices. The songs that I have chosen here are the same as in the chroma features tab. The reason for this is that I hope to gain further insight into these songs by discovering the underlying patterns that were previously not shown in the chromagrams. Nonetheless, I must say that I did not manage to analyze both plots yet, since I still had some difficulties with reading the plots precisely and correctly. Not only that, but I currently still have some doubts about the song choices (eg whether it would be more interesting to choose other songs than the same songs of the chroma features tab) and the displayed formats of these plots (eg whether to plot them in separate tabs to make the format bigger of just display them as how it now is). Overall, you could say that this tab is still a draft version with much room for improvement, which ultimately still need to be perfected.
+
+
+### Keygrams 1
+
+```{r}
+circshift <- function(v, n) {
+  if (n == 0) v else c(tail(v, n), head(v, -n))
+}
+
+#      C     C#    D     Eb    E     F     F#    G     Ab    A     Bb    B
+major_chord <-
+  c(   1,    0,    0,    0,    1,    0,    0,    1,    0,    0,    0,    0)
+minor_chord <-
+  c(   1,    0,    0,    1,    0,    0,    0,    1,    0,    0,    0,    0)
+seventh_chord <-
+  c(   1,    0,    0,    0,    1,    0,    0,    1,    0,    0,    1,    0)
+
+major_key <-
+  c(6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88)
+minor_key <-
+  c(6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17)
+
+chord_templates <-
+  tribble(
+    ~name, ~template,
+    "Gb:7", circshift(seventh_chord, 6),
+    "Gb:maj", circshift(major_chord, 6),
+    "Bb:min", circshift(minor_chord, 10),
+    "Db:maj", circshift(major_chord, 1),
+    "F:min", circshift(minor_chord, 5),
+    "Ab:7", circshift(seventh_chord, 8),
+    "Ab:maj", circshift(major_chord, 8),
+    "C:min", circshift(minor_chord, 0),
+    "Eb:7", circshift(seventh_chord, 3),
+    "Eb:maj", circshift(major_chord, 3),
+    "G:min", circshift(minor_chord, 7),
+    "Bb:7", circshift(seventh_chord, 10),
+    "Bb:maj", circshift(major_chord, 10),
+    "D:min", circshift(minor_chord, 2),
+    "F:7", circshift(seventh_chord, 5),
+    "F:maj", circshift(major_chord, 5),
+    "A:min", circshift(minor_chord, 9),
+    "C:7", circshift(seventh_chord, 0),
+    "C:maj", circshift(major_chord, 0),
+    "E:min", circshift(minor_chord, 4),
+    "G:7", circshift(seventh_chord, 7),
+    "G:maj", circshift(major_chord, 7),
+    "B:min", circshift(minor_chord, 11),
+    "D:7", circshift(seventh_chord, 2),
+    "D:maj", circshift(major_chord, 2),
+    "F#:min", circshift(minor_chord, 6),
+    "A:7", circshift(seventh_chord, 9),
+    "A:maj", circshift(major_chord, 9),
+    "C#:min", circshift(minor_chord, 1),
+    "E:7", circshift(seventh_chord, 4),
+    "E:maj", circshift(major_chord, 4),
+    "G#:min", circshift(minor_chord, 8),
+    "B:7", circshift(seventh_chord, 11),
+    "B:maj", circshift(major_chord, 11),
+    "D#:min", circshift(minor_chord, 3)
+  )
+
+key_templates <-
+  tribble(
+    ~name, ~template,
+    "Gb:maj", circshift(major_key, 6),
+    "Bb:min", circshift(minor_key, 10),
+    "Db:maj", circshift(major_key, 1),
+    "F:min", circshift(minor_key, 5),
+    "Ab:maj", circshift(major_key, 8),
+    "C:min", circshift(minor_key, 0),
+    "Eb:maj", circshift(major_key, 3),
+    "G:min", circshift(minor_key, 7),
+    "Bb:maj", circshift(major_key, 10),
+    "D:min", circshift(minor_key, 2),
+    "F:maj", circshift(major_key, 5),
+    "A:min", circshift(minor_key, 9),
+    "C:maj", circshift(major_key, 0),
+    "E:min", circshift(minor_key, 4),
+    "G:maj", circshift(major_key, 7),
+    "B:min", circshift(minor_key, 11),
+    "D:maj", circshift(major_key, 2),
+    "F#:min", circshift(minor_key, 6),
+    "A:maj", circshift(major_key, 9),
+    "C#:min", circshift(minor_key, 1),
+    "E:maj", circshift(major_key, 4),
+    "G#:min", circshift(minor_key, 8),
+    "B:maj", circshift(major_key, 11),
+    "D#:min", circshift(minor_key, 3)
+  )
+```
+
+
+```{r}
+creepin <-
+  get_tidy_audio_analysis("2dHHgzDwk4BJdRwy9uXhTO") |>
+  compmus_align(sections, segments) |>
+  select(sections) |>
+  unnest(sections) |>
+  mutate(
+    pitches =
+      map(segments,
+        compmus_summarise, pitches,
+        method = "mean", norm = "manhattan"
+      )
+  )
+```
+
+```{r}
+creepin |> 
+  compmus_match_pitch_template(
+    key_templates,         # Change to chord_templates if descired
+    method = "euclidean",  # Try different distance metrics
+    norm = "manhattan"     # Try different norms
+  ) |>
+  ggplot(
+    aes(x = start + duration / 2, width = duration, y = name, fill = d)
+  ) +
+  geom_tile() +
+  scale_fill_viridis_c(guide = "none") +
+  theme_minimal() +
+  labs(x = "Time (s)", y = "", title = "Creepin’ by Metro Boomin, The Weeknd and 21 Savage")
+```
+
+***
+
+The pattern in this keygram is not immediately clear, but if you look closely, you can see that the main key is C sharp minor. This result is very suiting, since the song is more of an emotional one and the C sharp minor key tends to evoke a dark, passionate, melancholic and sad mood. 
+
+One other thing that is noticable in this keygram are the intro and outro of the song (first and last 10 seconds), because these are the only parts that seem to differ from the main sections of the song. Here, the intro consists mainly of humming vocals, which is different from the rest of the song, and the outro gradually changes to silence, which explains the bright yellow and green colors at the end. 
+
+### Keygram 2
+```{r}
+#out of time
+out_of_time <-
+  get_tidy_audio_analysis("2SLwbpExuoBDZBpjfefCtV") |>
+  compmus_align(sections, segments) |>
+  select(sections) |>
+  unnest(sections) |>
+  mutate(
+    pitches =
+      map(segments,
+        compmus_summarise, pitches,
+        method = "mean", norm = "manhattan"
+      )
+  )
+
+```
+
+```{r}
+out_of_time |> 
+  compmus_match_pitch_template(
+    key_templates,         # Change to chord_templates if descired
+    method = "euclidean",  # Try different distance metrics
+    norm = "manhattan"     # Try different norms
+  ) |>
+  ggplot(
+    aes(x = start + duration / 2, width = duration, y = name, fill = d)
+  ) +
+  geom_tile() +
+  scale_fill_viridis_c(guide = "none") +
+  theme_minimal() +
+  labs(x = "Time (s)", y = "", title = "Out of Time by The Weeknd")
+```
+
+
+*** 
+
+The pattern in this keygram is very prominent, since the C minor key is much darker than the other keys. Just like the previous keygram, the emphasis on this main key is also quite fitting. This particular song is considered more on the "happy" side with a slight touch of sadness. This sadness is not only highlighted by the love-sick undertone of the song, but also cultivated by the C minor key, which fosters the feelings of (unhappy) love and the longing for love.   
+
+With regard to the key change, you can see there is a very consistent use of keys throughout main sections of the song up until 180 seconds, where the keys seem to differ substantially from the other sections of the song. An explanation for this is that not only the main melody changes, but also the use of vocals. At 180 seconds, the vocals gradually change into talking, which thus completely differs from the rest of the song. 
+
+
+
+### draft tab 1: Comparing the timbre coefficients of both corpora 
+```{r}
+corpus <-
+  get_playlist_audio_features(
+    "",
+    "4XcUvhRB3cwMXyN7Jy1C2H"
+  ) |>
+  slice(1:30) |>
+  add_audio_analysis()
+corpus_feat <-
+  get_playlist_audio_features(
+    "",
+    "4TEjBviN4UjutCCpFKnUoD"
+  ) |>
+  slice(1:30) |>
+  add_audio_analysis()
+```
+
+```{r}
+jazz <-
+  corpus |>
+  mutate(genre = "The Weeknd's songs") |>
+  bind_rows(corpus_feat |> mutate(genre = "Songs featuring The Weeknd"))
+
+jazz |>
+  mutate(
+    timbre =
+      map(
+        segments,
+        compmus_summarise,
+        timbre,
+        method = "mean"
+      )
+  ) |>
+  select(genre, timbre) |>
+  compmus_gather_timbre() |>
+  ggplot(aes(x = basis, y = value, fill = genre)) +
+  geom_violin() +
+  scale_fill_viridis_d() +
+  labs(x = "Spotify Timbre Coefficients", y = "", fill = "Corpus")
+
+```
+
+***
+
+Still to be edited.
+
+### draft tab 2: Track-Level summaries
+```{r}
+jazz |>
+  mutate(
+    sections =
+      map(
+        sections,                                    # sections or segments
+        summarise_at,
+        vars(tempo, loudness, duration),             # features of interest
+        list(section_mean = mean, section_sd = sd)   # aggregation functions
+      )
+  ) |>
+  unnest(sections) |>
+  ggplot(
+    aes(
+      x = tempo,
+      y = tempo_section_sd,
+      colour = genre,
+      alpha = loudness
+    )
+  ) +
+  geom_point(aes(size = duration / 60)) +
+  geom_rug() +
+  theme_minimal() +
+  ylim(0, 5) +
+  labs(
+    x = "Mean Tempo (bpm)",
+    y = "SD Tempo",
+    colour = "Corpus",
+    size = "Duration (min)",
+    alpha = "Volume (dBFS)"
+  )
+```
+
+***
+
+Still to be edited.
 
 ### Concluding remarks
 Still to be edited in the future
