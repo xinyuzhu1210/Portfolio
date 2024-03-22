@@ -39,54 +39,127 @@ library(ggplot2)
 library(ggjoy)
 library(plotly)
 library(compmus)
-#library(tidymodels)
-#library(heatmaply)
-#library(protoclust)
+library(tidymodels)
+library(heatmaply)
+library(ggdendro)
 library(cowplot)
+library(dendextend)
 ```
 
-### Is The Weeknd distinguisable? 
-```{r}
-#wicked games
-wicked_games <- get_tidy_audio_analysis("6VwBbL8CzPiC4QV66ay7oR")
-```
+### Dendrogram analysis
 
 ```{r}
-plot_wicked_games <- wicked_games |>
-  tempogram(window_size = 8, hop_size = 1, cyclic = FALSE) |>
-  ggplot(aes(x = time, y = bpm, fill = power)) +
-  geom_raster() +
-  scale_fill_viridis_c(guide = "none") +
-  labs(x = "Time (s)", y = "Tempo (BPM)", title="Wicked Games by The Weeknd") +
-  theme_classic()
+halloween <-
+  get_playlist_audio_features("", "3KjSxbaPtfQySx9ewBUzf1") |>
+  add_audio_analysis() |>
+  mutate(
+    segments = map2(segments, key, compmus_c_transpose),
+    pitches =
+      map(segments,
+        compmus_summarise, pitches,
+        method = "mean", norm = "manhattan"
+      ),
+    timbre =
+      map(
+        segments,
+        compmus_summarise, timbre,
+        method = "mean"
+      )
+  ) |>
+  mutate(pitches = map(pitches, compmus_normalise, "clr")) |>
+  mutate_at(vars(pitches, timbre), map, bind_rows) |>
+  unnest(cols = c(pitches, timbre))
+```
+
+```{r}
+halloween_juice <-
+  recipe(
+    track.name ~
+      danceability +
+      energy +
+      loudness +
+      speechiness +
+      acousticness +
+      instrumentalness +
+      liveness +
+      valence +
+      tempo +
+      duration +
+      C + `C#|Db` + D + `D#|Eb` +
+      E + `F` + `F#|Gb` + G +
+      `G#|Ab` + A + `A#|Bb` + B +
+      c01 + c02 + c03 + c04 + c05 + c06 +
+      c07 + c08 + c09 + c10 + c11 + c12,
+    data = halloween
+  ) |>
+  step_center(all_predictors()) |>
+  step_scale(all_predictors()) |> 
+  # step_range(all_predictors()) |> 
+  prep(halloween |> mutate(track.name = str_trunc(track.name, 12))) |>
+  juice() |>
+  column_to_rownames("track.name")
 ```
 
 
 ```{r}
-# better believe
-better_believe <- get_tidy_audio_analysis("2WN7xpcY4zmcqF57HFEGZY")
+halloween_dist <- dist(halloween_juice, method = "euclidean")
 ```
 
 ```{r}
-plot_better_believe <- better_believe |>
-  tempogram(window_size = 8, hop_size = 1, cyclic = FALSE) |>
-  ggplot(aes(x = time, y = bpm, fill = power)) +
-  geom_raster() +
-  scale_fill_viridis_c(guide = "none") +
-  labs(x = "Time (s)", y = "Tempo (BPM)", title="Better Believe by Belly, The Weeknd and Young Thug") +
-  theme_classic()
+dendrogram <- halloween_dist |> 
+  hclust(method = "complete")  # Try single, average, and complete.
 ```
 
 
 ```{r}
-plot_grid(plot_wicked_games, plot_better_believe, ncol = 1)
+#dend_colored<-color_branches(dendrogram, k=3)
+#plot(dend_colored)
+
+#dend_colored <- color_labels(dendrogram, k = 3)
+#plot(dend_colored)
+
+dendrogram <- dendrogram %>%
+  as.dendrogram() 
+par(mfrow = c(2,1))
+
+plot_1 <- dendrogram %>%
+  set("labels_col", value = c("#ff91a4", "#64b7ed"), k=2) %>%
+  set("branches_k_color", value = c("#ff91a4", "#64b7ed"), k = 2) %>%
+  plot()
+  title(main="Dendrogram with 2 clusters")
+
+plot_2 <- dendrogram %>%
+  set("labels_col", value = c("#ff91a4", "#64b7ed", "#32cd32"), k=3) %>%
+  set("branches_k_color", value = c("#ff91a4", "#64b7ed", "#32cd32"), k = 3) %>%
+  plot()
+  title(main="Dendrogram with an outlier")
+  
+par(mfrow = c(1,1))
 ```
 
-*** 
 
-One thing that I have noticed about The Weeknd is that most of his songs have a very steady tempo. This consistency in tempo can also be seen in the song Wicked Games, which, in my opinion, is quite representative for The Weeknd's music style as it evokes a melancholic, sultry and dark mood. In the corresponding tempogram, you can thus see that the song has a tempo around 230 BPM throughout the entire song, which may seem ordinary at first hand, but is in fact very insightful when detecting his voice in the featured songs. In the second tempogram, one of his featured songs is displayed and it immediately shows a difference in the steadiness of the song tempo. This song also has a main tempo of approximately 230 BPM, but in contrast with the previous song, it also has moments with a lower or higher tempo than 230 BPM. The interesting part about this result is that the moments with a tempo of 230 BPM are the moments where The Weeknd sings, with the exception of the song intro (0:00-0:49 minutes), and all other moments are sung by the other artists. Knowing this, we could thus say that in this particular featured song, The Weeknd's voice is distinguisable. This, in turn, is very insightful since it could explain why The Weeknd stands out as an artist. 
+***
 
+In the first dendrogram, you can see that the subselection of the corpus could be separated into roughly 2 clusters. This subselection consists of 30 songs, with 15 featured and 15 non-featured songs. One thing that is very striking about these 2 clusters is that the first cluster (red) mainly contains the featured songs, whereas cluster 2 (blue) mainly contains the non-featured songs. This may imply that The Weeknd's music style in his featured songs is quite similar, which, in turn, could explain their high similarity level. Not only that, but some of the featured songs are also clustered together with the non-featured songs, which is predominantly the case with cluster 2. This means that The Weeknd may not deviate much from his own music style when he collaborates with other artists. 
 
+In the second dendrogram, you can see that the song Low Life by Future and The Weeknd is clustered alone when indicating a total amount of 3 clusters in the algorithm. This result was somewhat unexpected, since it was not directly noticeable in the first dendrogram. Because of this, it may be interesting to find out why it was considered an outlier, which would be further explained in the next tab. 
+
+Although my interpretations of the dendrograms could be insightful, I must note that the dendrograms are based on a subset of the corpus songs. This means that the resulting dendrograms could be significantly different depending on which subselection of songs. In turn, this may influence the interpretations of the graphs and thus their overall conclusions. As transparency is key, this is one important aspect to take into account when making graph interpretations. 
+
+### Heatmap for detecting the outlier
+```{r}
+heatmaply(
+  halloween_juice,
+  hclustfun = hclust,
+  hclust_method = "complete",  # Change for single, average, or complete linkage.
+  dist_method = "euclidean", 
+  k_row = 3
+)
+```
+
+***
+
+As can be seen in the previous tab, the song Low Life by Future and The Weeknd is considered an outlier. Since it could be interesting to know why, I have plotted a heatmap that displays their audio features as well as the dendrograms. In the heatmap, you could thus see that the song Low Life stands out in the area of instrumentalness. This is because all other songs have a rather low instrumentalness, whereas the song Low Life has a considerably high number of instrumentalness. 
 
 ### Corpus description
 
@@ -194,8 +267,8 @@ rosalia_plot <- rosalia |>
     )
   ) +
   geom_tile() +
-  geom_vline(xintercept = 81, colour = "orange") +
-  geom_vline(xintercept = 129, colour = "orange") +
+  geom_vline(xintercept = 81, colour = "#FFFFFF") +
+  geom_vline(xintercept = 129, colour = "#FFFFFF") +
   labs(x = "Time (s)", y = NULL, fill = "Magnitude", title = "LA FAMA by Rosalía and The Weeknd ") +
   theme_minimal() +
   scale_fill_viridis_c()
@@ -212,7 +285,7 @@ maluma_plot <- maluma |>
     )
   ) +
   geom_tile() +
-  geom_vline(xintercept = 26, colour = "orange") +
+  geom_vline(xintercept = 26, colour = "#FFFFFF") +
   labs(x = "Time (s)", y = NULL, fill = "Magnitude", title = "Hawái by Maluma and The Weeknd ") +
   theme_minimal() +
   scale_fill_viridis_c()
@@ -595,6 +668,49 @@ jazz |>
 ***
 
 Still to be edited.
+
+### Is The Weeknd distinguisable? 
+```{r}
+#wicked games
+wicked_games <- get_tidy_audio_analysis("6VwBbL8CzPiC4QV66ay7oR")
+```
+
+```{r}
+plot_wicked_games <- wicked_games |>
+  tempogram(window_size = 8, hop_size = 1, cyclic = FALSE) |>
+  ggplot(aes(x = time, y = bpm, fill = power)) +
+  geom_raster() +
+  scale_fill_viridis_c(guide = "none") +
+  labs(x = "Time (s)", y = "Tempo (BPM)", title="Wicked Games by The Weeknd") +
+  theme_classic()
+```
+
+
+```{r}
+# better believe
+better_believe <- get_tidy_audio_analysis("2WN7xpcY4zmcqF57HFEGZY")
+```
+
+```{r}
+plot_better_believe <- better_believe |>
+  tempogram(window_size = 8, hop_size = 1, cyclic = FALSE) |>
+  ggplot(aes(x = time, y = bpm, fill = power)) +
+  geom_raster() +
+  scale_fill_viridis_c(guide = "none") +
+  labs(x = "Time (s)", y = "Tempo (BPM)", title="Better Believe by Belly, The Weeknd and Young Thug") +
+  theme_classic()
+```
+
+
+```{r}
+plot_grid(plot_wicked_games, plot_better_believe, ncol = 1)
+```
+
+*** 
+
+One thing that I have noticed about The Weeknd is that most of his songs have a very steady tempo. This consistency in tempo can also be seen in the song Wicked Games, which, in my opinion, is quite representative for The Weeknd's music style as it evokes a melancholic, sultry and dark mood. In the corresponding tempogram, you can thus see that the song has a tempo around 230 BPM throughout the entire song, which may seem ordinary at first hand, but is in fact very insightful when detecting his voice in the featured songs. 
+
+In the second tempogram, one of his featured songs is displayed and it immediately shows a difference in the steadiness of the song tempo. This song also has a main tempo of approximately 230 BPM, but in contrast with the previous song, it also has moments with a lower or higher tempo than 230 BPM. The interesting part about this result is that the moments with a tempo of 230 BPM are the moments where The Weeknd sings, with the exception of the song intro (0:00-0:49 minutes), and all other moments are sung by the other artists. Knowing this, we could thus say that in this particular featured song, The Weeknd's voice is distinguisable. This, in turn, is very insightful since it could explain why The Weeknd stands out as an artist. 
 
 ### Concluding remarks
 Still to be edited in the future
