@@ -1,7 +1,7 @@
 ---
 title: "Portfolio for Computational Musicology: Analyzing The Weeknd"
 author: "Xinyu Zhu"
-date: "February 2024"
+date: "April 2024"
 output: 
   flexdashboard::flex_dashboard:
     storyboard: true
@@ -46,124 +46,10 @@ library(cowplot)
 library(dendextend)
 ```
 
-### Dendrogram analysis
 
-```{r}
-halloween <-
-  get_playlist_audio_features("", "3KjSxbaPtfQySx9ewBUzf1") |>
-  add_audio_analysis() |>
-  mutate(
-    segments = map2(segments, key, compmus_c_transpose),
-    pitches =
-      map(segments,
-        compmus_summarise, pitches,
-        method = "mean", norm = "manhattan"
-      ),
-    timbre =
-      map(
-        segments,
-        compmus_summarise, timbre,
-        method = "mean"
-      )
-  ) |>
-  mutate(pitches = map(pitches, compmus_normalise, "clr")) |>
-  mutate_at(vars(pitches, timbre), map, bind_rows) |>
-  unnest(cols = c(pitches, timbre))
-```
+### Let's get the weeknd started!
 
-```{r}
-halloween_juice <-
-  recipe(
-    track.name ~
-      danceability +
-      energy +
-      loudness +
-      speechiness +
-      acousticness +
-      instrumentalness +
-      liveness +
-      valence +
-      tempo +
-      duration +
-      C + `C#|Db` + D + `D#|Eb` +
-      E + `F` + `F#|Gb` + G +
-      `G#|Ab` + A + `A#|Bb` + B +
-      c01 + c02 + c03 + c04 + c05 + c06 +
-      c07 + c08 + c09 + c10 + c11 + c12,
-    data = halloween
-  ) |>
-  step_center(all_predictors()) |>
-  step_scale(all_predictors()) |> 
-  # step_range(all_predictors()) |> 
-  prep(halloween |> mutate(track.name = str_trunc(track.name, 12))) |>
-  juice() |>
-  column_to_rownames("track.name")
-```
-
-
-```{r}
-halloween_dist <- dist(halloween_juice, method = "euclidean")
-```
-
-```{r}
-dendrogram <- halloween_dist |> 
-  hclust(method = "complete")  # Try single, average, and complete.
-```
-
-
-```{r}
-#dend_colored<-color_branches(dendrogram, k=3)
-#plot(dend_colored)
-
-#dend_colored <- color_labels(dendrogram, k = 3)
-#plot(dend_colored)
-
-dendrogram <- dendrogram %>%
-  as.dendrogram() 
-par(mfrow = c(2,1))
-
-plot_1 <- dendrogram %>%
-  set("labels_col", value = c("#ff91a4", "#64b7ed"), k=2) %>%
-  set("branches_k_color", value = c("#ff91a4", "#64b7ed"), k = 2) %>%
-  plot()
-  title(main="Dendrogram with 2 clusters")
-
-plot_2 <- dendrogram %>%
-  set("labels_col", value = c("#ff91a4", "#64b7ed", "#32cd32"), k=3) %>%
-  set("branches_k_color", value = c("#ff91a4", "#64b7ed", "#32cd32"), k = 3) %>%
-  plot()
-  title(main="Dendrogram with an outlier")
-  
-par(mfrow = c(1,1))
-```
-
-
-***
-
-In the first dendrogram, you can see that the subselection of the corpus could be separated into roughly 2 clusters. This subselection consists of 30 songs, with 15 featured and 15 non-featured songs. One thing that is very striking about these 2 clusters is that the first cluster (red) mainly contains the featured songs, whereas cluster 2 (blue) mainly contains the non-featured songs. This may imply that The Weeknd's music style in his featured songs is quite similar, which, in turn, could explain their high similarity level. Not only that, but some of the featured songs are also clustered together with the non-featured songs, which is predominantly the case with cluster 2. This means that The Weeknd may not deviate much from his own music style when he collaborates with other artists. 
-
-In the second dendrogram, you can see that the song Low Life by Future and The Weeknd is clustered alone when indicating a total amount of 3 clusters in the algorithm. This result was somewhat unexpected, since it was not directly noticeable in the first dendrogram. Because of this, it may be interesting to find out why it was considered an outlier, which would be further explained in the next tab. 
-
-Although my interpretations of the dendrograms could be insightful, I must note that the dendrograms are based on a subset of the corpus songs. This means that the resulting dendrograms could be significantly different depending on which subselection of songs. In turn, this may influence the interpretations of the graphs and thus their overall conclusions. As transparency is key, this is one important aspect to take into account when making graph interpretations. 
-
-### Heatmap for detecting the outlier
-```{r}
-heatmaply(
-  halloween_juice,
-  hclustfun = hclust,
-  hclust_method = "complete",  # Change for single, average, or complete linkage.
-  dist_method = "euclidean", 
-  k_row = 3
-)
-```
-
-***
-
-As can be seen in the previous tab, the song Low Life by Future and The Weeknd is considered an outlier. Since it could be interesting to know why, I have plotted a heatmap that displays their audio features as well as the dendrograms. In the heatmap, you could thus see that the song Low Life stands out in the area of instrumentalness. This is because all other songs have a rather low instrumentalness, whereas the song Low Life has a considerably high number of instrumentalness. 
-
-### Corpus description
-
-The portfolio focuses on a corpus that consists of songs made by The Weeknd as well as songs featured by The Weeknd. I decided to analyse this specific kind of corpus, because The Weeknd was the most listened artist from my sportify wrapped and I was interested in the factors that made me drawn to his music. To make the analyses more concrete, I decided to compare different points from the corpus, namely the songs from The Weeknd and the songs that he was featured in. Specifically, I will first examine the songs from The Weeknd to gain a greater insight from his music and then I will evaluate to what extend the music changes when he is featured in songs of other artists. This way I hope to discover what characteristics in his music make him distinctive as an artist, even in the featured songs. As a matter of fact, I expect that the dynamics of the compared songs would be different in general, but the featured parts of the Weeknd would be quite similar to the Weeknd’s own songs. The one thing that I would be unsure about, however, is to which degree these featured parts are similar to the Weeknd’s own songs. All in all, I think the tracks from my corpus are quite representative for the groups that I want to compare, since it is predominantly focused on one artist. However, I will not cover all songs produced by The Weeknd, so I must note that the analyses could differ substantially per song and comparison.
+The portfolio focuses on a corpus that consists of songs made by The Weeknd (around 300 songs) as well as songs featured by The Weeknd (around 80 songs). I decided to analyse this specific kind of corpus, because The Weeknd was the most listened artist from my sportify wrapped and I was interested in the factors that made me drawn to his music. To make the analyses more concrete, I decided to compare different points from the corpus, namely the songs from The Weeknd and the songs that he was featured in. Specifically, I will first examine the songs from The Weeknd to gain a greater insight from his music and then I will evaluate to what extend the music changes when he is featured in songs of other artists. This way I hope to discover what characteristics in his music make him distinctive as an artist, even in the featured songs. As a matter of fact, I expect that the dynamics of the compared songs would be different in general, but the featured parts of the Weeknd would be quite similar to the Weeknd’s own songs. The one thing that I would be unsure about, however, is to which degree these featured parts are similar to the Weeknd’s own songs. All in all, I think the tracks from my corpus are quite representative for the groups that I want to compare, since it is predominantly focused on one artist. However, I will not cover all songs produced by The Weeknd, so I must note that the analyses could differ substantially per song and comparison.
 
 To provide a better overview of my corpus, I have listed some examples of typical songs below. These songs I would consider typical, because they are one of the many songs that represent The Weeknd catalogue.
 
@@ -178,51 +64,54 @@ Featured songs:
   - Creepin’ by Metro Boomin, The Weeknd and 21 Savage
   
 
-### In your feelings
+### In your feelings dancing the night away
 
 ```{r}
 weeknd <- get_artist_audio_features('the weeknd')
 valence_songs <- weeknd
-
-```
-
-```{r, fig.width=10}
-ggplot(valence_songs, aes(x = valence, y = album_name)) + 
-    geom_joy(scale = 0.9, fill="lightblue") + 
-    theme_joy() +
-    ggtitle("Valence distributions of the Weeknds's songs") + 
-    labs(x="Valence", y = "Album name")
-```
-
-
-***
-
-To gain more insight into the Weeknd's music, I have first analyzed the underlying audio features of his songs alone. When looking at the Valence image, you can see that all of his albums has a quite low valence score (mostly below 0.5), which means that it is more likely to be associated with negative feelings.
-
-### Let's dance?
-```{r}
 danceability_songs1 <- weeknd
 ```
 
-```{r, fig.width=10}
-ggplot(danceability_songs1, aes(x = danceability, y = album_name)) + 
-    geom_joy(scale = 0.9, fill="lightblue") + 
+```{r, fig.width=21, fig.height=18}
+
+p1 <- ggplot(valence_songs, aes(x = valence, y = album_name)) + 
+    geom_joy(scale = 1, fill="lightblue") + 
+    theme_joy() +
+    ggtitle("Valence distributions of the Weeknds's songs") + 
+    labs(x="Valence", y = "Album name")
+
+```
+
+```{r, fig.width=21, fig.height=18}
+p2 <- ggplot(danceability_songs1, aes(x = danceability, y = album_name)) + 
+    geom_joy(scale = 1, fill="lightblue") + 
     theme_joy() +
     ggtitle("Danceability distributions of the Weeknds's songs") +
     labs(x="Danceability", y = "Album name")
+
 ```
 
+```{r, fig.width=21, fig.height=18}
+plot_grid(p1, p2, ncol = 1)
+```
 
 ***
-On the other hand, the Danceability score of his albums are more on the higher side (mostly above 0.5), which means that his songs are more danceable in general.
 
-### How does emotional valence affect The Weeknd's songs?  
+To gain more insight into the Weeknd's music, I have first analyzed the underlying audio features of his songs alone. When looking at the valence distributions, you can see that all of his albums has a quite low valence score (mostly below 0.5), which means that it is more likely to be associated with negative feelings.
+
+On the other hand, the danceability score of his albums are more on the higher side (mostly above 0.5), which means that his songs are in general more suitable for dancing based on music elements such as tempo, rhythm stability, beat strength, and overall regularity. 
+
+That the danceability distributions were quite high even though the valence distributions were quite low was actually fairly surprising, especially since one would expect a positive correlation between these features instead of a negative one. In fact, it even feels somewhat counter intuitive, as one would not immediately associate dancing with the idea of negative or sad feelings. Nonetheless, it seems still the case and we will dive a bit deeper into these audio features to learn more about their underlying relationship. 
+
+
+### The Weeknd's signature style?
 ```{r}
 audio_feat1 <- weeknd
 ```
 
 
 ```{r}
+#How does emotional valence affect The Weeknd's songs?  
 data <- audio_feat1 |> ggplot(aes(x = valence, y = danceability, color=energy, label = track_name )) + geom_point()  +
          ggtitle("Analysis of the Weeknd's songs based on audio features") +
          xlab("Valence") +
@@ -234,9 +123,12 @@ interactive
 
 
 ***
-That there was a difference in these feature scores was actually quite surprising, especially since one would expect a positive correlation between these features instead of a negative one, as can be seen in the scatterplot image. Not only that, but they both also positively correlate with the energy scores, which seems reasonable given their interplay with eachother. The interesting part would therefore be about the difference between the scatter plot correlations and the feature distributions. It would be fascinating to examine why the danceability scores were quite high, despite the low overall valence scores, and how it was affected by other audio features. 
+In the previous plots, it was assumed that the correlation between the audio features valence and danceability was a negative one. However, as can be seen in the scatter plot, the relationship between those variables are in fact positive and they both also positively correlate with the energy scores. But why did they seem to correlate negatively previously? Well, if you look very closely you can see that the slope of the line is quite steep in the beginning (x axis valence score from 0 to 0.25), which explains why a low valence score is associated with a high(er) danceability score. It is indeed true that the higher the valence scores, the higher the danceability scores, but as can be inferred from the plot, most of The Weeknd's songs are more on the danceable side, even if the valence score was not that high. 
 
-### Chroma features
+With regard to the energy levels, it seems reasonable that both variables positively correlate with the energy scores given their interplay with each other. Songs that have a very low energy level have low valence and danceability scores, and songs that have a very high energy level have high valence and danceability scores. For the levels in between, it seems like the higher levels correlate with the higher valence and danceability scores, but looking at the graph, it is quite hard to see a very clear correlation between those variables. 
+
+
+### Let's dance
 ```{r pop-chroma}
 rosalia <-
   get_tidy_audio_analysis("77VjuBo3CJbamC3gzaUzK9") |>
@@ -295,13 +187,15 @@ plot_grid(rosalia_plot, maluma_plot, ncol = 1)
 
 
 ***
-Despite the fact that I like to listen to r&b and hip-hop songs, I would say that my music taste is a mix of different genres. Two of those genres fall under Spanish music, namely the genres reggaeton and urbano latino. Since it would be interesting to analyze "outlier" songs for the chromagram, I decided to chose the only two songs where The Weeknd was featured in Spanish songs. This way I hope to gain more insight into his music as an artist, even if he was featured in songs outside of his own genre. 
+Now that we have analyzed the non-featured songs from The Weeknd, we will begin to look at some of his featured songs. 
+
+Despite the fact that I like to listen to r&b and hip-hop songs, I would say that my music taste is a mix of different genres. Two of those genres fall under Spanish music, namely the genres reggaeton and urbano latino, which, in general, are considered more danceable. Since it would be interesting to analyze "outlier" songs for the chromagram, I decided to chose the only two songs where The Weeknd was featured in Spanish songs. This way I not only hope to discover the underlying structures in his featured songs but also to gain more insight into his music as an artist, even if he was featured in songs outside of his own genre. 
 
 In the first chromagram, you can see two distinct moments that really stand out in the song. These key moments (at 1:21 and 2:09) are very prominent, because not only the background music changes in those moments, but also the underlying beat itself disappears. All in all, these moments are very well integrated in the song, since they make the song more dynamic. 
 
 In the second chromagram something similar happens, but only in the beginning of the song. Here, The Weeknd's singing first served as an introduction with no beats in the background music. Then, at 0:26, the song seems to indicate its "start" by introducing a reggaeton type of beat that is repeated through the whole song. 
 
-### Comparing chroma-based and timbre-based self-similarity matrices
+### Let's dive deeper
 ```{r}
 rosalia_self <-
   get_tidy_audio_analysis("6Y46tOTRhkBamosyuWa6YX") |>
@@ -403,17 +297,23 @@ maluma_self_plot <- bind_rows(
   theme_classic() +
   labs(x = "", y = "", title = "Comparison for the song Hawái")
 
+```
+
+
+```{r, fig.width=15, fig.height=15}
 plot_grid(rosalia_self_plot, maluma_self_plot, ncol = 1)
 ```
 
 
-
 ***
+To take one step further, I decided to make two chroma-based and timbre-based self-similarity matrices of the previous two songs. The reason for this is that I hope to gain further insight into these songs by discovering the underlying patterns that were previously not already shown in the chromagrams. As both songs are quite danceable and most of the Weeknd's songs are also quite danceable, it would be interesting to look for their overlapping song structures, if any. In other words, I not only aim to look for structures in the chroma and timbre of the songs, but also for structures that would indicate The Weeknd's presence in the songs. 
 
-For now I have decided to make two chroma-based and timbre-based self-similarity matrices. The songs that I have chosen here are the same as in the chroma features tab. The reason for this is that I hope to gain further insight into these songs by discovering the underlying patterns that were previously not shown in the chromagrams. Nonetheless, I must say that I did not manage to analyze both plots yet, since I still had some difficulties with reading the plots precisely and correctly. Not only that, but I currently still have some doubts about the song choices (eg whether it would be more interesting to choose other songs than the same songs of the chroma features tab) and the displayed formats of these plots (eg whether to plot them in separate tabs to make the format bigger of just display them as how it now is). Overall, you could say that this tab is still a draft version with much room for improvement, which ultimately still need to be perfected.
+In the first self-similarity matrix you can see that there is light checkerboard pattern. This pattern indicate the verse-chorus pattern of the song, which is quite consistent in the song. In the timbre-based self-similarity matrix, a more noticeable pattern can be seen, namely the thick green stripes in the middle (around 100s) and towards the end (around 150s). One thing that is very remarkable, is that the first thick green lines highlights The Weeknd's singing. 
+
+In the second self-similarity matrix, you can see that the pattern is quite different from the first one. In the chroma-based self-similarity matrix the part where the blue lines start, is the part where The Weeknd's intro ends. Again, The Weeknd's singing is also here highlighted. 
 
 
-### Keygrams 1
+### Heartbreak
 
 ```{r}
 circshift <- function(v, n) {
@@ -536,12 +436,13 @@ creepin |>
 ```
 
 ***
+So, to explore The Weeknd's characteristics or influence even more, we will review the relationship between the main key that was used in the song and overall mood of the song. For most of The Weeknd's songs as well as his featured songs, the produced keygrams were not very clear, as they all have an R&B or hip hop genre. However, I did find two songs (one featured song and one non-featured songs) that displayed clear keygrams with an interesting underlying pattern. 
 
-The pattern in this keygram is not immediately clear, but if you look closely, you can see that the main key is C sharp minor. This result is very suiting, since the song is more of an emotional one and the C sharp minor key tends to evoke a dark, passionate, melancholic and sad mood. 
+The pattern in this keygram is not immediately clear at first hand, but if you look closely, you can see that the main key is C sharp minor. This result is very suiting, since the song is more of an emotional one and the C sharp minor key tends to evoke a dark, passionate, melancholic and sad mood. 
 
-One other thing that is noticable in this keygram are the intro and outro of the song (first and last 10 seconds), because these are the only parts that seem to differ from the main sections of the song. Here, the intro consists mainly of humming vocals, which is different from the rest of the song, and the outro gradually changes to silence, which explains the bright yellow and green colors at the end. 
+One other thing that is noticable in this keygram are the intro and outro of the song (first and last 10 seconds), because these are the only parts that seem to differ from the main sections of the song. Here, the intro consists mainly of humming vocals, which is different from the rest of the song, and the outro gradually changes into silence, which explains the bright yellow and green colors at the end. 
 
-### Keygram 2
+### Lovesick
 ```{r}
 #out of time
 out_of_time <-
@@ -575,99 +476,18 @@ out_of_time |>
   labs(x = "Time (s)", y = "", title = "Out of Time by The Weeknd")
 ```
 
+```{r}
+#plot_grid(creepin_plot, outoftime_plot, ncol = 1)
+```
+
 
 *** 
-
 The pattern in this keygram is very prominent, since the C minor key is much darker than the other keys. Just like the previous keygram, the emphasis on this main key is also quite fitting. This particular song is considered more on the "happy" side with a slight touch of sadness. This sadness is not only highlighted by the love-sick undertone of the song, but also cultivated by the C minor key, which fosters the feelings of (unhappy) love and the longing for love.   
 
 With regard to the key change, you can see there is a very consistent use of keys throughout main sections of the song up until 180 seconds, where the keys seem to differ substantially from the other sections of the song. An explanation for this is that not only the main melody changes, but also the use of vocals. At 180 seconds, the vocals gradually change into talking, which thus completely differs from the rest of the song. 
 
+All in all, I would say that The Weeknd's signature style, the emergence of a dark, sultry, passionate and sad mood, is also quite dominant in his featured song (previous tab). Since this is only one song, it could be the case that his signature style would not always shine through in his featured songs. Nevertheless, I would not be surprised if it were the case with a few other featured songs of his, as his signature style is what makes him unique and distinctive. 
 
-
-### draft tab 1: Comparing the timbre coefficients of both corpora 
-```{r}
-corpus <-
-  get_playlist_audio_features(
-    "",
-    "4XcUvhRB3cwMXyN7Jy1C2H"
-  ) |>
-  slice(1:30) |>
-  add_audio_analysis()
-corpus_feat <-
-  get_playlist_audio_features(
-    "",
-    "4TEjBviN4UjutCCpFKnUoD"
-  ) |>
-  slice(1:30) |>
-  add_audio_analysis()
-```
-
-```{r}
-jazz <-
-  corpus |>
-  mutate(genre = "The Weeknd's songs") |>
-  bind_rows(corpus_feat |> mutate(genre = "Songs featuring The Weeknd"))
-
-jazz |>
-  mutate(
-    timbre =
-      map(
-        segments,
-        compmus_summarise,
-        timbre,
-        method = "mean"
-      )
-  ) |>
-  select(genre, timbre) |>
-  compmus_gather_timbre() |>
-  ggplot(aes(x = basis, y = value, fill = genre)) +
-  geom_violin() +
-  scale_fill_viridis_d() +
-  labs(x = "Spotify Timbre Coefficients", y = "", fill = "Corpus")
-
-```
-
-***
-
-Still to be edited.
-
-### draft tab 2: Track-Level summaries
-```{r}
-jazz |>
-  mutate(
-    sections =
-      map(
-        sections,                                    # sections or segments
-        summarise_at,
-        vars(tempo, loudness, duration),             # features of interest
-        list(section_mean = mean, section_sd = sd)   # aggregation functions
-      )
-  ) |>
-  unnest(sections) |>
-  ggplot(
-    aes(
-      x = tempo,
-      y = tempo_section_sd,
-      colour = genre,
-      alpha = loudness
-    )
-  ) +
-  geom_point(aes(size = duration / 60)) +
-  geom_rug() +
-  theme_minimal() +
-  ylim(0, 5) +
-  labs(
-    x = "Mean Tempo (bpm)",
-    y = "SD Tempo",
-    colour = "Corpus",
-    size = "Duration (min)",
-    alpha = "Volume (dBFS)"
-  )
-```
-
-***
-
-Still to be edited.
 
 ### Is The Weeknd distinguisable? 
 ```{r}
@@ -707,10 +527,213 @@ plot_grid(plot_wicked_games, plot_better_believe, ncol = 1)
 ```
 
 *** 
-
-One thing that I have noticed about The Weeknd is that most of his songs have a very steady tempo. This consistency in tempo can also be seen in the song Wicked Games, which, in my opinion, is quite representative for The Weeknd's music style as it evokes a melancholic, sultry and dark mood. In the corresponding tempogram, you can thus see that the song has a tempo around 230 BPM throughout the entire song, which may seem ordinary at first hand, but is in fact very insightful when detecting his voice in the featured songs. 
+One other thing that I have noticed about The Weeknd is that most of his songs have a very steady tempo. This consistency in tempo can also be seen in the song Wicked Games, which, in my opinion, is quite representative for The Weeknd's music style as it evokes a melancholic, sultry and dark mood. In the corresponding tempogram, you can thus see that the song has a tempo around 230 BPM throughout the entire song, which may seem ordinary at first hand, but is in fact very insightful when detecting his voice in the featured songs. 
 
 In the second tempogram, one of his featured songs is displayed and it immediately shows a difference in the steadiness of the song tempo. This song also has a main tempo of approximately 230 BPM, but in contrast with the previous song, it also has moments with a lower or higher tempo than 230 BPM. The interesting part about this result is that the moments with a tempo of 230 BPM are the moments where The Weeknd sings, with the exception of the song intro (0:00-0:49 minutes), and all other moments are sung by the other artists. Knowing this, we could thus say that in this particular featured song, The Weeknd's voice is distinguisable. This, in turn, is very insightful since it could explain why The Weeknd stands out as an artist. 
 
-### Concluding remarks
-Still to be edited in the future
+### Featured or non-featured song?
+
+```{r}
+halloween <-
+  get_playlist_audio_features("", "3KjSxbaPtfQySx9ewBUzf1") |>
+  add_audio_analysis() |>
+  mutate(
+    segments = map2(segments, key, compmus_c_transpose),
+    pitches =
+      map(segments,
+        compmus_summarise, pitches,
+        method = "mean", norm = "manhattan"
+      ),
+    timbre =
+      map(
+        segments,
+        compmus_summarise, timbre,
+        method = "mean"
+      )
+  ) |>
+  mutate(pitches = map(pitches, compmus_normalise, "clr")) |>
+  mutate_at(vars(pitches, timbre), map, bind_rows) |>
+  unnest(cols = c(pitches, timbre))
+```
+
+```{r}
+halloween_juice <-
+  recipe(
+    track.name ~
+      danceability +
+      energy +
+      loudness +
+      speechiness +
+      acousticness +
+      instrumentalness +
+      liveness +
+      valence +
+      tempo +
+      duration +
+      C + `C#|Db` + D + `D#|Eb` +
+      E + `F` + `F#|Gb` + G +
+      `G#|Ab` + A + `A#|Bb` + B +
+      c01 + c02 + c03 + c04 + c05 + c06 +
+      c07 + c08 + c09 + c10 + c11 + c12,
+    data = halloween
+  ) |>
+  step_center(all_predictors()) |>
+  step_scale(all_predictors()) |> 
+  # step_range(all_predictors()) |> 
+  prep(halloween |> mutate(track.name = str_trunc(track.name, 12))) |>
+  juice() |>
+  column_to_rownames("track.name")
+```
+
+
+```{r}
+halloween_dist <- dist(halloween_juice, method = "euclidean")
+```
+
+```{r}
+dendrogram <- halloween_dist |> 
+  hclust(method = "complete")  # Try single, average, and complete.
+```
+
+
+```{r}
+#dend_colored<-color_branches(dendrogram, k=3)
+#plot(dend_colored)
+
+#dend_colored <- color_labels(dendrogram, k = 3)
+#plot(dend_colored)
+
+dendrogram <- dendrogram %>%
+  as.dendrogram() 
+par(mfrow = c(2,1))
+
+plot_1 <- dendrogram %>%
+  set("labels_col", value = c("#ff91a4", "#64b7ed"), k=2) %>%
+  set("branches_k_color", value = c("#ff91a4", "#64b7ed"), k = 2) %>%
+  plot()
+  title(main="Dendrogram with 2 clusters")
+
+plot_2 <- dendrogram %>%
+  set("labels_col", value = c("#ff91a4", "#64b7ed", "#32cd32"), k=3) %>%
+  set("branches_k_color", value = c("#ff91a4", "#64b7ed", "#32cd32"), k = 3) %>%
+  plot()
+  title(main="Dendrogram with an outlier")
+  
+par(mfrow = c(1,1))
+```
+
+
+***
+So, now that we have looked at a few music characteristics of The weekend, we will find out whether his featured and non-featured songs will be clustered together by applying a clustering algorithm on a subset of his songs. Here I have used a complete-linkage clustering with Euclidean distance as the distance metric. 
+
+In the first dendrogram, you can see that the subselection of the corpus could be separated into roughly 2 clusters. This subselection consists of 30 songs, with 15 featured and 15 non-featured songs. One thing that is very striking about these 2 clusters is that the first cluster (red) mainly contains the featured songs, whereas cluster 2 (blue) mainly contains the non-featured songs. This may imply that The Weeknd's music style in his featured songs is quite similar, which, in turn, could explain their high similarity level. Not only that, but some of the featured songs are also clustered together with the non-featured songs, which is predominantly the case with cluster 2. This means that The Weeknd may not deviate much from his own music style when he collaborates with other artists. 
+
+In the second dendrogram, you can see that the song Low Life by Future and The Weeknd is clustered alone when indicating a total amount of 3 clusters in the algorithm. This result was somewhat unexpected, since it was not directly noticeable in the first dendrogram. Because of this, it may be interesting to find out why it was considered an outlier, which would be further explained in the next tab. 
+
+Although my interpretations of the dendrograms could be insightful, I must note that the dendrograms are based on a subset of the corpus songs. This means that the resulting dendrograms could be significantly different depending on which subselection of songs. In turn, this may influence the interpretations of the graphs and thus their overall conclusions. As transparency is key, this is one important aspect to take into account when making graph interpretations. 
+
+### Outlier detected! 
+```{r}
+heatmaply(
+  halloween_juice,
+  hclustfun = hclust,
+  hclust_method = "complete",  # Change for single, average, or complete linkage.
+  dist_method = "euclidean", 
+  k_row = 3
+)
+```
+
+***
+
+As can be seen in the previous tab, the song Low Life by Future and The Weeknd is considered an outlier. Since it could be interesting to know why, I have plotted a heatmap that displays their audio features as well as the dendrograms. In the heatmap, you could thus see that the song Low Life stands out in the area of instrumentalness. This is because all other songs have a rather low instrumentalness, whereas the song Low Life has a considerably high number of instrumentalness. Although it was given a moderately high number on instrumentalness, the result of it was not expected, since the song contains both vocals and rap. It could be that I overlooked something when I was listening to the song or it could be that Sportify did not analyze this particular song correctly with regard to the audio feature instrumentalness. Either way, this nonetheless could have influenced the overall interpretations and conclusions of the plot, which ultimately also should be taken into consideration. 
+
+
+### Concluding remarks I
+```{r}
+#Comparing the timbre coefficients of both corpora 
+corpus <-
+  get_playlist_audio_features(
+    "",
+    "4XcUvhRB3cwMXyN7Jy1C2H"
+  ) |>
+  slice(1:30) |>
+  add_audio_analysis()
+corpus_feat <-
+  get_playlist_audio_features(
+    "",
+    "4TEjBviN4UjutCCpFKnUoD"
+  ) |>
+  slice(1:30) |>
+  add_audio_analysis()
+```
+
+```{r, fig.width=20}
+jazz <-
+  corpus |>
+  mutate(genre = "The Weeknd's songs") |>
+  bind_rows(corpus_feat |> mutate(genre = "Songs featuring The Weeknd"))
+
+jazz |>
+  mutate(
+    timbre =
+      map(
+        segments,
+        compmus_summarise,
+        timbre,
+        method = "mean"
+      )
+  ) |>
+  select(genre, timbre) |>
+  compmus_gather_timbre() |>
+  ggplot(aes(x = basis, y = value, fill = genre)) +
+  geom_violin() +
+  scale_fill_viridis_d() +
+  labs(x = "Spotify Timbre Coefficients", y = "", fill = "Corpus")
+
+```
+
+***
+To finalize the portfolio, we will look at two plots that compare both corpora with regard to the Sportify Timbre Coefficients and the track-level summaries. In the Sportify Timbre Coefficients plot, we could see that there is not much of a difference between both corpora. The only Sportify Timbre Coefficients that seem to stand out are the coefficients c05 and c11. However the differences seems to be minimal and if you look at the plot globally, the minor differences are barely noticeable. This means that both corpora are quite similar regarding the Sportify Timbre Coefficients. 
+
+### Concluding remarks II
+```{r}
+jazz |>
+  mutate(
+    sections =
+      map(
+        sections,                                    # sections or segments
+        summarise_at,
+        vars(tempo, loudness, duration),             # features of interest
+        list(section_mean = mean, section_sd = sd)   # aggregation functions
+      )
+  ) |>
+  unnest(sections) |>
+  ggplot(
+    aes(
+      x = tempo,
+      y = tempo_section_sd,
+      colour = genre,
+      alpha = loudness
+    )
+  ) +
+  geom_point(aes(size = duration / 60)) +
+  geom_rug() +
+  theme_minimal() +
+  ylim(0, 5) +
+  labs(
+    x = "Mean Tempo (bpm)",
+    y = "SD Tempo",
+    colour = "Corpus",
+    size = "Duration (min)",
+    alpha = "Volume (dBFS)"
+  )
+```
+
+***
+
+Just with the Sportify Timbre Coefficients plot, there is also not much difference between both corpora in the track-level summary plot with regard to the tempo, loudness and duration of the songs. You could say that the songs featuring The Weeknd have a slightly higher SD Tempo, but, in general, a prominent relationship between those variables that indicate their differences is hard to find. So, given all of this information, we could conclude that The Weeknd's songs and his featured songs are quite similar to some extent. They are not completely identical, but they do have some overlapping characteristics that represent The Weeknd's music style, which, in turn, indicate his presence. 
+
+All in all, making various analyses about one of my favorite artists was a great learning experience that not only brought me closer to the artist, but also helped me understand his music at a level that I did not know before. I obtained a different view on music in general and gained further insight into their underlying structures. This portfolio and its conclusions could be profitable for everyone that is interested in music theory and the underlying music structures. However, before closing the chapter, I must note that the interpretations and conclusions in this portfolio are subjective and that the final remarks could differ per person and analysis. Thus, it is just my look into the world of The Weeknd. 
+
+
+
